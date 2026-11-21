@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#c42238">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Prüfungen 9d">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../pruefungen/icon-180.png">
+<link rel="icon" href="../pruefungen/icon-192.png">
+<title>Prüfungen 9d</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: ruhig, klar, ein Werkzeug für jeden Tag – wie ein gutes Hausaufgabenheft
+   IDEA: Karopapier aus dem Schulheft, Korrekturen in Rotstift
+   PICTURE: die nächste Prüfung als großer Countdown oben, darunter „Heute“ zum Abhaken
+   COLOUR and TYPE: Papierweiß mit grauem Karo, Rotstift als Hauptfarbe; Rubik + Kalam
+   LAYOUT: eine Spalte; beim ersten Öffnen ein kurzer Fragebogen */
+:root{color-scheme:light dark;
+ --bg:light-dark(#fafafa,#141416);--grid:light-dark(#e9e9ec,#222226);
+ --ink:light-dark(#1d1d21,#ededf0);--soft:light-dark(#66666e,#a4a4ad);
+ --card:light-dark(#ffffff,#1c1c20);--line:light-dark(#e2e2e6,#303036);
+ --blue:light-dark(#c42238,#ee4141);--red:light-dark(#b3141c,#d8333a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;color:var(--ink);font:16px/1.5 Rubik,system-ui,sans-serif;overflow-x:clip;background-color:var(--bg);
+ background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px}
+main{max-width:640px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) max(4vw,14px) calc(48px + env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+h1{font-size:32px;line-height:1.05;margin:6px 0}
+.upd{font-size:13px;color:var(--soft)}
+.hero{margin:16px 0 22px;background:var(--blue);color:#fff;border-radius:18px;padding:20px 22px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 18px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.hero .n{font-size:clamp(64px,18vw,96px);font-weight:700;line-height:.9;grid-row:span 3}
+.hero .unit{font-family:Kalam,cursive;font-size:20px;opacity:.9}
+.hero .what{font-size:22px;font-weight:700;line-height:1.15}
+.hero .when{font-size:15px;opacity:.9}
+h2{font-size:20px;margin:26px 0 10px;display:flex;align-items:baseline;gap:10px}
+h2 small{font-weight:400;font-size:14px;color:var(--soft)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 14px}
+.task{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.task:last-child{border-bottom:0}
+.task input{appearance:none;flex:none;width:24px;height:24px;border:2px solid var(--blue);border-radius:6px;margin:1px 0 0;cursor:pointer;display:grid;place-content:center;background:var(--card)}
+.task input:checked{background:var(--blue)}
+.task input:checked::after{content:"";width:10px;height:6px;border:solid #fff;border-width:0 0 2.5px 2.5px;transform:rotate(-45deg) translate(1px,-1px)}
+.task input:focus-visible,button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.task label{cursor:pointer}
+.task.done label{text-decoration:line-through;color:var(--soft)}
+.tag{font-size:13px;font-weight:500;color:var(--blue);margin-right:6px}
+.min{font-size:13px;color:var(--soft);white-space:nowrap}
+.empty{color:var(--soft);padding:12px 0;font-family:Kalam,cursive;font-size:18px}
+.exam{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.exam>button{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 14px;cursor:pointer;min-height:64px}
+.cal{border-radius:10px;overflow:hidden;text-align:center;border:1px solid var(--line);background:var(--bg)}
+.cal b{display:block;background:var(--red);color:#fff;font-size:12px;font-weight:500;padding:1px 0}
+.cal span{display:block;font-size:24px;font-weight:700;line-height:1.3}
+.subj{font-weight:700;font-size:17px;line-height:1.2}
+.meta{font-size:13px;color:var(--soft)}
+.pill{font-size:13px;font-weight:500;border-radius:99px;padding:3px 10px;white-space:nowrap;background:var(--bg);border:1px solid var(--line)}
+.pill.hot{background:var(--red);border-color:var(--red);color:#fff}
+.pill.warm{border-color:var(--red);color:var(--red)}
+.body{display:none;padding:0 16px 16px;border-top:1px dashed var(--line)}
+.exam.open .body{display:block}
+.body h3{font-size:15px;margin:14px 0 6px}
+.topics{margin:0;padding-left:20px}
+.day{margin-top:10px}
+.day .d{font-family:Kalam,cursive;font-size:18px;color:var(--red)}
+.day.past{opacity:.55}
+.src{font-size:13px;color:var(--soft);margin-top:12px}
+.btn{font:inherit;font-weight:500;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px;min-height:44px;cursor:pointer}
+.btn.main{background:var(--blue);border-color:var(--blue);color:#fff;width:100%;font-size:17px;margin-top:18px}
+.link{all:unset;color:var(--blue);cursor:pointer;text-decoration:underline;font-size:14px}
+details summary{cursor:pointer;color:var(--soft);font-size:14px;padding:8px 0}
+/* Fragebogen */
+#setup{display:none}
+body.setup #setup{display:block}body.setup #app{display:none}
+.q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+.q h3{margin:0 0 4px;font-size:17px}
+.q p{margin:0 0 10px;font-size:14px;color:var(--soft)}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts label{position:relative}
+.opts input{position:absolute;opacity:0;inset:0}
+.opts span{display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);cursor:pointer;font-weight:500}
+.opts input:checked+span{background:var(--blue);border-color:var(--blue);color:#fff}
+.opts input:focus-visible+span{outline:3px solid var(--red);outline-offset:2px}
+.intro{font-size:17px;margin:8px 0 0}
+@media(prefers-reduced-motion:no-preference){.exam.open .body{animation:drop .18s ease-out}@keyframes drop{from{opacity:0;transform:translateY(-4px)}}}
+</style>
+</head>
+<body>
+<main>
+<section id="setup">
+  <h1>Prüfungen 9d</h1>
+  <p class="intro">Ein paar kurze Fragen, damit du nur deine Prüfungen siehst und der Lernplan zu dir passt.</p>
+  <form id="form">
+    <div class="q"><h3>Religion oder Ethik?</h3><p>Welchen Unterricht hast du?</p>
+      <div class="opts">
+        <label><input type="radio" name="rel" value="eth" required><span>Ethik</span></label>
+        <label><input type="radio" name="rel" value="rk"><span>Katholisch</span></label>
+        <label><input type="radio" name="rel" value="ev"><span>Evangelisch</span></label>
+      </div></div>
+    <div class="q"><h3>Zweite Fremdsprache</h3><p>Welche Sprache hast du neben Englisch?</p>
+      <div class="opts">
+        <label><input type="radio" name="lang" value="lat" required><span>Latein</span></label>
+        <label><input type="radio" name="lang" value="fr"><span>Französisch</span></label>
+        <label><input type="radio" name="lang" value="other"><span>Andere</span></label>
+      </div></div>
+    <div class="q"><h3>An welchen Tagen hast du keine Zeit zum Lernen?</h3><p>Zum Beispiel wegen Training oder Musik. Diese Tage plant die App frei.</p>
+      <div class="opts" id="daysOpts"></div></div>
+    <div class="q"><h3>Wie lange willst du höchstens pro Tag lernen?</h3><p>Gilt für alle Fächer zusammen.</p>
+      <div class="opts">
+        <label><input type="radio" name="cap" value="30"><span>30 min</span></label>
+        <label><input type="radio" name="cap" value="45"><span>45 min</span></label>
+        <label><input type="radio" name="cap" value="60" checked><span>1 Stunde</span></label>
+        <label><input type="radio" name="cap" value="90"><span>1,5 Stunden</span></label>
+      </div></div>
+    <button class="btn main" type="submit">Los geht’s</button>
+  </form>
+</section>
+
+<section id="app">
+  <header><h1>Prüfungen 9d</h1><span class="upd" id="upd"></span></header>
+  <section id="hero"></section>
+  <h2>Heute lernen <small id="todayDate"></small></h2>
+  <div class="box" id="today"></div>
+  <h2>Alle Leistungsnachweise</h2>
+  <div id="list"></div>
+  <details id="pastWrap"><summary>Vorbei</summary><div id="past"></div></details>
+  <p class="src">Termine aus dem Schulkalender der 9d (Eltern-Portal), werden Montag bis Freitag mittags aktualisiert. Die Lernpläne erstellt die App automatisch aus deinen Antworten. Deine Antworten und Häkchen bleiben nur auf diesem Gerät. <button class="link" id="edit" type="button">Antworten ändern</button></p>
+</section>
+</main>
+
+<script id="app-data" type="application/json">
+{"updated":"2026-11-21T20:45:00+01:00",
+"exams":[
+{"id":"lat-2026-11-20","subject":"Latein","type":"Schulaufgabe","teacher":"Kö","date":"2026-11-20","group":"lat","topics":[]},
+{"id":"che-2026-11-24","subject":"Chemie","type":"Schulaufgabe","teacher":"Km","date":"2026-11-24","group":null,"topics":["Atombau, Nuklidschreibweise, Isotope, mittlere Atommasse","Radioaktivität, Strahlungstypen und Abschirmung, Halbwertszeit","Kernreaktor und Kettenreaktion (drei Voraussetzungen), Leichtwasserreaktor (Massendefekt)","Flammenfärbung, Energiestufenmodell, Energiediagramm","Ionisierungsenergie und IE-Diagramme","Besetzungsregel, Elektronenkonfiguration","Periodensystem, Hauptgruppen, Edelgasregel","Ionenladungen, Verhältnisformeln, Atom- und Ionenradien","Elektrolyse, Schmelzflusselektrolyse, Redoxgleichungen, Aluminiumgewinnung"]},
+{"id":"phy-2026-12-01","subject":"Physik","type":"Schulaufgabe","teacher":"Sp","date":"2026-12-01","group":null,"topics":[]},
+{"id":"eng-2026-12-03","subject":"Englisch","type":"Schulaufgabe","teacher":"Fm","date":"2026-12-03","group":null,"topics":[]},
+{"id":"rel-2026-12-14","subject":"Kath. Religionslehre","type":"Kleiner Leistungsnachweis","teacher":"Kö","date":"2026-12-14","group":"rk","topics":[]},
+{"id":"inf-2026-12-21","subject":"Informatik","type":"Kurzarbeit","teacher":"Wo","date":"2026-12-21","group":null,"topics":[]},
+{"id":"deu-2027-02-18","subject":"Deutsch","type":"Schulaufgabe","teacher":"Kl","date":"2027-02-18","group":null,"topics":[]},
+{"id":"mat-2027-02-25","subject":"Mathematik","type":"Schulaufgabe","teacher":"Gr","date":"2027-02-25","group":null,"topics":[]},
+{"id":"lat-2027-03-05","subject":"Latein","type":"Schulaufgabe","teacher":"Kö","date":"2027-03-05","group":"lat","topics":[]},
+{"id":"eng-2027-03-17","subject":"Englisch","type":"Mündliche Schulaufgabe","teacher":"Fm","date":"2027-03-17","group":null,"topics":[]}
+]}
+</script>
+<script>
+{
+const DATA = JSON.parse(document.getElementById('app-data').textContent);
+const MON = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const WD = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+const pad = n => String(n).padStart(2,'0');
+const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
+const add = (s, n) => { const d = parse(s); d.setDate(d.getDate()+n); return iso(d); };
+const todayIso = iso(new Date());
+const days = s => Math.round((parse(s) - parse(todayIso)) / 864e5);
+const nice = s => { const d = parse(s); return WD[d.getDay()]+', '+d.getDate()+'. '+MON[d.getMonth()]; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const load = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+let prefs = load('klasse-prefs');
+let done = load('klasse-done') || {};
+
+/* Fragebogen */
+const daysOpts = document.getElementById('daysOpts');
+daysOpts.innerHTML = [1,2,3,4,5,6,0].map(i => '<label><input type="checkbox" name="busy" value="'+i+'"><span>'+WD[i]+'</span></label>').join('');
+const form = document.getElementById('form');
+const fillForm = p => {
+  if (!p) return;
+  form.querySelectorAll('input').forEach(i => {
+    if (i.name === 'busy') i.checked = p.busy.includes(+i.value);
+    else if (i.name in p) i.checked = String(p[i.name]) === i.value;
+  });
+};
+form.addEventListener('submit', ev => {
+  ev.preventDefault();
+  const f = new FormData(form);
+  prefs = { rel: f.get('rel'), lang: f.get('lang'), busy: f.getAll('busy').map(Number), cap: +(f.get('cap') || 60) };
+  store('klasse-prefs', prefs);
+  render();
+});
+document.getElementById('edit').addEventListener('click', () => { fillForm(prefs); document.body.classList.add('setup'); scrollTo(0, 0); });
+
+/* Lernplan-Bausteine je nach Art und Fach */
+const LANG = /Englisch|Latein|Französisch/, CALC = /Mathematik|Physik|Chemie|Informatik/;
+const steps = ex => {
+  const s = ex.subject;
+  if (/Mündlich/.test(ex.type)) return [
+    ['Themen und Wortschatz der Unit sammeln', 25], ['Zu jedem Thema ein paar Sätze laut sprechen üben', 30],
+    ['Mit jemandem ein kurzes Gespräch üben', 30], ['Wichtige Redewendungen wiederholen', 20]];
+  if (ex.type !== 'Schulaufgabe') return [
+    ['Stoff sammeln: Hefteinträge seit der letzten Abfrage lesen', 25],
+    [CALC.test(s) ? 'Aufgaben aus dem Unterricht nochmal selbst lösen' : 'Das Wichtigste zusammenfassen, Fachbegriffe erklären können', 30],
+    ['Kurz wiederholen, offene Fragen klären', 20]];
+  const middle = LANG.test(s) ? [['Vokabeln Teil 1 lernen', 25], ['Vokabeln Teil 2 und Grammatik wiederholen', 35], ['Einen Übungstext bzw. eine Übersetzung unter Zeitdruck machen', 40]]
+    : CALC.test(s) ? [['Erste Hälfte der Themen lernen, Formeln mit Einheiten aufschreiben', 40], ['Zweite Hälfte der Themen lernen', 40], ['Übungsaufgaben aus Heft und Buch rechnen', 45]]
+    : s === 'Deutsch' ? [['Merkmale der Textsorte wiederholen', 30], ['Einen Übungsaufsatz gliedern', 30], ['Einen Übungsaufsatz unter Zeitdruck schreiben', 45]]
+    : [['Erste Hälfte des Stoffs lernen', 40], ['Zweite Hälfte des Stoffs lernen', 40], ['Übungsaufgaben machen', 40]];
+  return [['Stoff sammeln: Hefteinträge und Arbeitsblätter seit der letzten Prüfung durchsehen, Themenliste machen', 25], ...middle,
+    ['Fehler und schwierige Stellen wiederholen, nichts Neues mehr, früh schlafen', 25]];
+};
+
+/* Plan rückwärts ab dem Prüfungstag verteilen, frühere Prüfungen zuerst */
+const buildPlans = exams => {
+  const load = {}, examDays = new Set(exams.map(e => e.date));
+  exams.forEach(ex => {
+    const st = steps(ex), plan = {};
+    let day = add(ex.date, -1), limit = st.length * 3 + 4;
+    for (let i = st.length - 1; i >= 0 && limit > 0; ) {
+      if (day < todayIso) {
+        /* zu wenig Zeit bis zur Prüfung: übrige Schritte gebündelt auf den frühesten noch möglichen Tag legen */
+        /* zu wenig Zeit: übrige Schritte auf die am wenigsten vollen Tage ab heute verteilen, Reihenfolge bleibt */
+        for (const d in plan) plan[d].forEach(t => load[d] -= t.m);
+        for (const d in plan) delete plan[d];
+        let cand = [];
+        for (let d = todayIso; d < ex.date; d = add(d, 1)) if (!examDays.has(d) && !prefs.busy.includes(parse(d).getDay())) cand.push(d);
+        if (!cand.length) for (let d = todayIso; d < ex.date; d = add(d, 1)) if (!examDays.has(d)) cand.push(d);
+        if (!cand.length) break;
+        const per = Math.ceil(st.length / cand.length), off = cand.length - Math.ceil(st.length / per);
+        st.forEach((s, j) => { const d = cand[Math.min(cand.length - 1, off + Math.floor(j / per))];
+          (plan[d] = plan[d] || []).push({ t: s[0], m: s[1], k: ex.id + '|' + j }); load[d] = (load[d] || 0) + s[1]; });
+        break;
+      }
+      const wd = parse(day).getDay(), used = load[day] || 0;
+      const free = !prefs.busy.includes(wd) && !examDays.has(day) && used + st[i][1] <= Math.max(prefs.cap, st[i][1]) && (used === 0 || used + st[i][1] <= prefs.cap);
+      if (free) { (plan[day] = plan[day] || []).unshift({ t: st[i][0], m: st[i][1], k: ex.id + '|' + i }); load[day] = used + st[i][1]; i--; }
+      else { day = add(day, -1); limit--; }
+    }
+    ex.plan = Object.keys(plan).sort().map(d => ({ date: d, tasks: plan[d] }));
+  });
+};
+
+const taskRow = (ex, t, withTag) => {
+  const on = !!done[t.k], id = 'c' + t.k.replace(/[^a-z0-9]/gi, '');
+  return '<div class="task' + (on ? ' done' : '') + '"><input type="checkbox" id="' + id + '" data-k="' + esc(t.k) + '"' + (on ? ' checked' : '') + '><label for="' + id + '">' +
+    (withTag ? '<span class="tag">' + esc(ex.subject) + '</span>' : '') + esc(t.t) + ' <span class="min">· ' + t.m + ' min</span></label></div>';
+};
+const card = (ex, open) => {
+  const n = days(ex.date), d = parse(ex.date);
+  const cls = n < 0 ? '' : n <= 3 ? ' hot' : n <= 10 ? ' warm' : '';
+  const plan = (ex.plan || []).map(day => '<div class="day' + (days(day.date) < 0 ? ' past' : '') + '"><div class="d">' + nice(day.date) + '</div>' + day.tasks.map(t => taskRow(ex, t, false)).join('') + '</div>').join('');
+  return '<div class="exam' + (open ? ' open' : '') + '"><button aria-expanded="' + open + '"><div class="cal"><b>' + MON[d.getMonth()] + '</b><span>' + d.getDate() + '</span></div>' +
+    '<div><div class="subj">' + esc(ex.subject) + '</div><div class="meta">' + esc(ex.type) + ' · ' + WD[d.getDay()] + ' · ' + esc(ex.teacher) + '</div></div>' +
+    '<span class="pill' + cls + '">' + (n < 0 ? 'vorbei' : n === 0 ? 'heute' : n === 1 ? 'morgen' : 'in ' + n + ' Tagen') + '</span></button><div class="body">' +
+    (ex.topics.length ? '<h3>Stoff laut Übersicht</h3><ul class="topics">' + ex.topics.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '') +
+    (plan ? '<h3>Lernplan</h3>' + plan : '') + '</div></div>';
+};
+
+const render = () => {
+  if (!prefs) { document.body.classList.add('setup'); return; }
+  document.body.classList.remove('setup');
+  const mine = DATA.exams.filter(e => !e.group || e.group === prefs.rel || e.group === prefs.lang).map(e => ({ ...e }));
+  const upcoming = mine.filter(e => days(e.date) >= 0).sort((a, b) => a.date.localeCompare(b.date));
+  const past = mine.filter(e => days(e.date) < 0).sort((a, b) => b.date.localeCompare(a.date));
+  buildPlans(upcoming);
+  const u = new Date(DATA.updated);
+  document.getElementById('upd').textContent = 'Stand: ' + u.getDate() + '. ' + MON[u.getMonth()] + ', ' + pad(u.getHours()) + ':' + pad(u.getMinutes()) + ' Uhr';
+  document.getElementById('todayDate').textContent = nice(todayIso);
+  const e0 = upcoming[0];
+  document.getElementById('hero').innerHTML = e0 ? (n => '<div class="hero"><div class="n">' + (n === 0 ? '!' : n) + '</div><div class="unit">' +
+    (n === 0 ? 'heute ist es so weit' : n === 1 ? 'Tag noch bis' : 'Tage noch bis') + '</div><div class="what">' + esc(e0.subject) + ' · ' + esc(e0.type) + '</div><div class="when">' + nice(e0.date) + '</div></div>')(days(e0.date)) : '<p class="empty">Keine Prüfungen eingetragen.</p>';
+  const todays = [];
+  upcoming.forEach(ex => ex.plan.forEach(day => { if (day.date === todayIso) day.tasks.forEach(t => todays.push(taskRow(ex, t, true))); }));
+  document.getElementById('today').innerHTML = todays.join('') || '<p class="empty">Heute steht nichts im Plan. Frei!</p>';
+  document.getElementById('list').innerHTML = upcoming.map((e, i) => card(e, i === 0)).join('') || '<p class="empty">Nichts geplant.</p>';
+  document.getElementById('past').innerHTML = past.map(e => card(e, false)).join('');
+  document.getElementById('pastWrap').hidden = !past.length;
+};
+
+document.addEventListener('click', ev => {
+  const b = ev.target.closest('.exam>button');
+  if (b) { const c = b.parentElement; c.classList.toggle('open'); b.setAttribute('aria-expanded', c.classList.contains('open')); }
+});
+document.addEventListener('change', ev => {
+  const c = ev.target; if (!c.dataset || !c.dataset.k) return;
+  if (c.checked) done[c.dataset.k] = 1; else delete done[c.dataset.k];
+  store('klasse-done', done);
+  document.querySelectorAll('input[data-k]').forEach(x => { if (x.dataset.k === c.dataset.k) { x.checked = c.checked; x.closest('.task').classList.toggle('done', c.checked); } });
+});
+render();
+}
+</script>
+</body>
+</html>
