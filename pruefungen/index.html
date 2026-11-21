@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1d3bb3">
+<meta name="theme-color" content="#c42238">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -19,13 +19,13 @@
 /* VOICE: ruhig, klar, ein Werkzeug für jeden Tag – wie ein gutes Hausaufgabenheft
    IDEA: Karopapier aus dem Schulheft, Korrekturen in Rotstift
    PICTURE: die nächste Prüfung als großer Countdown oben, darunter „Heute“ zum Abhaken
-   COLOUR and TYPE: Papierweiß mit Karo, Tintenblau, Rotstift als Akzent; Rubik + Kalam für Handschrift-Akzente
+   COLOUR and TYPE: Papierweiß mit rosa Karo, Rotstift als Hauptfarbe, Weinrot als Akzent; Rubik + Kalam für Handschrift-Akzente
    LAYOUT: eine Spalte, Kalenderblatt-Datum links an jeder Prüfung, aufklappbare Lernpläne */
 :root{color-scheme:light dark;
- --bg:light-dark(#fbfbf7,#0f1326);--grid:light-dark(#e3e8f3,#1b2140);
- --ink:light-dark(#18204a,#e8ebf7);--soft:light-dark(#5a6287,#a3abcd);
- --card:light-dark(#ffffff,#161c36);--line:light-dark(#d9deec,#2a3258);
- --blue:light-dark(#1d3bb3,#8ea6ff);--red:light-dark(#d1293d,#ff6b7d);--ok:light-dark(#2f7d4f,#6fd39a)}
+ --bg:light-dark(#fdf9f8,#1a0f12);--grid:light-dark(#f3e1e3,#2b1a1e);
+ --ink:light-dark(#2a1418,#f6eaec);--soft:light-dark(#7d5a60,#c7a7ad);
+ --card:light-dark(#ffffff,#24161a);--line:light-dark(#ecd6d9,#3d262b);
+ --blue:light-dark(#c42238,#ff6b7d);--red:light-dark(#8e1426,#ffb3bd);--ok:light-dark(#2f7d4f,#6fd39a)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;color:var(--ink);font:16px/1.5 Rubik,system-ui,sans-serif;overflow-x:clip;
@@ -37,12 +37,12 @@ header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
 h1{font-size:32px;line-height:1.05;margin:6px 0}
 .upd{font-size:13px;color:var(--soft)}
 .hero{margin:16px 0 22px;background:var(--blue);color:#fff;border-radius:18px;padding:20px 22px;
- display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 18px;align-items:center;box-shadow:0 8px 24px rgba(20,30,90,.18)}
+ display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 18px;align-items:center;box-shadow:0 8px 24px rgba(140,20,40,.22)}
 .hero .n{font-size:clamp(64px,18vw,96px);font-weight:700;line-height:.9;grid-row:span 3}
 .hero .unit{font-family:Kalam,cursive;font-size:20px;opacity:.9}
 .hero .what{font-size:22px;font-weight:700;line-height:1.15}
 .hero .when{font-size:15px;opacity:.9}
-.hero.today .n{color:#ffd9de}
+.hero.today .n{color:#ffe3a3}
 h2{font-size:20px;margin:26px 0 10px;display:flex;align-items:baseline;gap:10px}
 h2 small{font-weight:400;font-size:14px;color:var(--soft)}
 .today{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 14px}
