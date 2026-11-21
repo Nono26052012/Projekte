@@ -19,13 +19,13 @@
 /* VOICE: ruhig, klar, ein Werkzeug für jeden Tag – wie ein gutes Hausaufgabenheft
    IDEA: Karopapier aus dem Schulheft, Korrekturen in Rotstift
    PICTURE: die nächste Prüfung als großer Countdown oben, darunter „Heute“ zum Abhaken
-   COLOUR and TYPE: Papierweiß mit rosa Karo, Rotstift als Hauptfarbe, Weinrot als Akzent; Rubik + Kalam für Handschrift-Akzente
+   COLOUR and TYPE: Papierweiß mit grauem Karo, Rotstift als Hauptfarbe, Weinrot als Akzent; Rubik + Kalam für Handschrift-Akzente
    LAYOUT: eine Spalte, Kalenderblatt-Datum links an jeder Prüfung, aufklappbare Lernpläne */
 :root{color-scheme:light dark;
- --bg:light-dark(#fdf9f8,#1a0f12);--grid:light-dark(#f3e1e3,#2b1a1e);
- --ink:light-dark(#2a1418,#f6eaec);--soft:light-dark(#7d5a60,#c7a7ad);
- --card:light-dark(#ffffff,#24161a);--line:light-dark(#ecd6d9,#3d262b);
- --blue:light-dark(#c42238,#ff6b7d);--red:light-dark(#8e1426,#ffb3bd);--ok:light-dark(#2f7d4f,#6fd39a)}
+ --bg:light-dark(#fafafa,#141416);--grid:light-dark(#e9e9ec,#222226);
+ --ink:light-dark(#1d1d21,#ededf0);--soft:light-dark(#66666e,#a4a4ad);
+ --card:light-dark(#ffffff,#1c1c20);--line:light-dark(#e2e2e6,#303036);
+ --blue:light-dark(#c42238,#ff5a6e);--red:light-dark(#8e1426,#ff8a98);--ok:light-dark(#2f7d4f,#6fd39a)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;color:var(--ink);font:16px/1.5 Rubik,system-ui,sans-serif;overflow-x:clip;
@@ -37,7 +37,7 @@ header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
 h1{font-size:32px;line-height:1.05;margin:6px 0}
 .upd{font-size:13px;color:var(--soft)}
 .hero{margin:16px 0 22px;background:var(--blue);color:#fff;border-radius:18px;padding:20px 22px;
- display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 18px;align-items:center;box-shadow:0 8px 24px rgba(140,20,40,.22)}
+ display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 18px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.16)}
 .hero .n{font-size:clamp(64px,18vw,96px);font-weight:700;line-height:.9;grid-row:span 3}
 .hero .unit{font-family:Kalam,cursive;font-size:20px;opacity:.9}
 .hero .what{font-size:22px;font-weight:700;line-height:1.15}
