@@ -79,6 +79,29 @@ h2 small{font-weight:400;font-size:14px;color:var(--soft)}
 .note{font-size:14px;color:var(--soft);font-family:Kalam,cursive;font-size:17px}
 .src{font-size:13px;color:var(--soft);margin-top:12px}
 a{color:var(--blue)}
+.prac{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn{font:inherit;font-weight:500;border-radius:12px;border:1.5px solid var(--blue);background:var(--card);color:var(--blue);padding:8px 14px;min-height:44px;cursor:pointer}
+.btn.main{background:var(--blue);color:#fff}
+.btn:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.go{all:unset;cursor:pointer;color:var(--blue);font-size:13px;font-weight:500;border:1.5px solid var(--blue);border-radius:99px;padding:2px 10px;margin-left:6px;white-space:nowrap}
+.best{font-size:13px;color:var(--soft);margin-top:6px}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:10;padding:0}
+#modal[hidden]{display:none}
+.sheet{background:var(--bg);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom))}
+.sheet .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheet h3{margin:0;font-size:18px}
+.x{all:unset;cursor:pointer;font-size:28px;line-height:1;padding:4px 10px;color:var(--soft)}
+.prog{height:6px;background:var(--line);border-radius:9px;margin:12px 0 16px;overflow:hidden}.prog i{display:block;height:100%;background:var(--blue)}
+.qq{font-size:19px;font-weight:500;line-height:1.35;margin:0 0 14px}
+.opt{display:block;width:100%;text-align:left;font:inherit;background:var(--card);color:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;min-height:48px;cursor:pointer}
+.opt.right{border-color:var(--ok,#2f7d4f);background:color-mix(in srgb,var(--ok,#2f7d4f) 14%,var(--card))}
+.opt.wrong{border-color:var(--red);background:color-mix(in srgb,var(--red) 12%,var(--card))}
+.why{font-size:15px;margin:10px 0 4px}.why small{display:block;color:var(--soft);font-size:13px;margin-top:4px}
+.flash{background:var(--card);border:1.5px solid var(--line);border-radius:16px;min-height:200px;padding:22px;display:grid;place-content:center;text-align:center;font-size:20px;font-weight:500;cursor:pointer}
+.flash.back{font-size:17px;font-weight:400}
+.row{display:flex;gap:10px;margin-top:14px}.row .btn{flex:1}
+.res{font-size:56px;font-weight:700;color:var(--blue);margin:10px 0 0}
+.tip{font-size:14px;color:var(--soft);margin-top:10px}
 details summary{cursor:pointer;color:var(--soft);font-size:14px;padding:8px 0}
 @media(prefers-reduced-motion:no-preference){.exam.open .body{animation:drop .18s ease-out}@keyframes drop{from{opacity:0;transform:translateY(-4px)}}}
 </style>
@@ -95,269 +118,9 @@ details summary{cursor:pointer;color:var(--soft);font-size:14px;padding:8px 0}
 <p class="src">Termine aus deinem Schulkalender (Eltern-Portal, über Outlook „CHG Noah 9“), Stoff aus deinen OneNote-Kursnotizbüchern. Wird Montag bis Freitag um 12:50 aktualisiert. Abgehakte Aufgaben merkt sich nur dieses Gerät.</p>
 </main>
 
+<div id="modal" hidden></div>
 <script id="app-data" type="application/json">
-{
-"updated": "2026-11-21T20:35:00+01:00",
-"exams": [
-{
-"id": "lat-2026-11-20",
-"subject": "Latein",
-"type": "Schulaufgabe",
-"teacher": "Kö",
-"date": "2026-11-20",
-"topics": [],
-"plan": [],
-"note": ""
-},
-{
-"id": "che-2026-11-24",
-"subject": "Chemie",
-"type": "Schulaufgabe",
-"teacher": "Km",
-"date": "2026-11-24",
-"source": "OneNote C.Km.9d – Abschnitte I und II, Seite „Stoff für die Schulaufgabe Überblick“",
-"link": "https://claude.ai/artifact/W7G8HJNCtSGA6Eq4qLX3Cv",
-"linkText": "Lernzettel Chemie öffnen",
-"topics": [
-"Atombau, Nuklidschreibweise, Isotope, mittlere Atommasse (Beispiel Kohlenstoff 12,011 u)",
-"Radioaktivität, Strahlungstypen und Abschirmung, Halbwertszeit",
-"Kernspaltung, Kettenreaktion (drei Voraussetzungen!), Oklo, Leichtwasserreaktor (nur Massendefekt)",
-"Flammenfärbung und Energiestufenmodell, Energiediagramm",
-"Ionisierungsenergie, IE-Diagramme (Kalium: 1 | 8 | 8 | 2)",
-"Besetzungsregel 2n², Elektronenkonfiguration (Al 1² 2⁸ 3³), Energiestufendiagramm",
-"Periodensystem, Alkalimetalle, Halogene, Edelgasregel",
-"Ionenladungen, Verhältnisformeln, Atom- und Ionenradien",
-"Redox, Elektrolyse (Zinkiodid im U-Rohr), Schmelzflusselektrolyse, Aluminiumgewinnung"
-],
-"plan": [
-{
-"date": "2026-11-21",
-"tasks": [
-{
-"t": "Lernzettel Abschnitt 10 (Fallen) lesen",
-"m": 10
-},
-{
-"t": "Abschnitte 1–3: Atombau, Radioaktivität, Kettenreaktion – die drei Voraussetzungen auswendig",
-"m": 20
-}
-]
-},
-{
-"date": "2026-11-22",
-"tasks": [
-{
-"t": "Abschnitte 4–6: Energiediagramm zur Flammenfärbung zeichnen, IE-Diagramm von Kalium erklären, Energiestufendiagramme He, Mg, Cl, Al zeichnen",
-"m": 45
-},
-{
-"t": "Abschnitte 7–8: Edelgasregel, Ionenladungen, Verhältnisformeln üben, Ionenradius von Kalium erklären",
-"m": 45
-}
-]
-},
-{
-"date": "2026-11-23",
-"tasks": [
-{
-"t": "Abschnitt 9: Redoxgleichungen NaCl, Al₂O₃, PbCl₂ aus dem Kopf, U-Rohr-Skizze zeichnen",
-"m": 40
-},
-{
-"t": "Alles einmal querlesen, Fehlerliste durchgehen, früh schlafen",
-"m": 20
-}
-]
-}
-],
-"note": ""
-},
-{
-"id": "phy-2026-12-01",
-"subject": "Physik",
-"type": "Schulaufgabe",
-"teacher": "Sp",
-"date": "2026-12-01",
-"source": "OneNote Ph.Sp.9d.26-27 (wird eingelesen)",
-"topics": [],
-"plan": [
-{
-"date": "2026-11-25",
-"tasks": [
-{
-"t": "Stoff sammeln: Hefteinträge seit der letzten Physik-Prüfung im OneNote-Notizbuch durchblättern, Themenliste machen",
-"m": 30
-}
-]
-},
-{
-"date": "2026-11-26",
-"tasks": [
-{
-"t": "Erste Hälfte der Themen: Hefteinträge lernen, Formeln mit Einheiten aufschreiben",
-"m": 40
-}
-]
-},
-{
-"date": "2026-11-27",
-"tasks": [
-{
-"t": "Zweite Hälfte der Themen lernen",
-"m": 40
-}
-]
-},
-{
-"date": "2026-11-29",
-"tasks": [
-{
-"t": "Übungsaufgaben aus Heft und Buch rechnen",
-"m": 45
-}
-]
-},
-{
-"date": "2026-11-30",
-"tasks": [
-{
-"t": "Fehler aus den Übungen wiederholen, Formelblatt einmal auswendig aufschreiben",
-"m": 30
-}
-]
-}
-],
-"note": "Die genauen Themen trage ich beim nächsten Update aus deinem Physik-Notizbuch ein."
-},
-{
-"id": "eng-2026-12-03",
-"subject": "Englisch",
-"type": "Schulaufgabe",
-"teacher": "Fm",
-"date": "2026-12-03",
-"source": "OneNote E.Fm.9d.26-27 (wird eingelesen)",
-"topics": [],
-"plan": [
-{
-"date": "2026-11-25",
-"tasks": [
-{
-"t": "Vokabeln der aktuellen Unit, Teil 1",
-"m": 15
-}
-]
-},
-{
-"date": "2026-11-27",
-"tasks": [
-{
-"t": "Vokabeln Teil 2 und Grammatik der Unit wiederholen",
-"m": 30
-}
-]
-},
-{
-"date": "2026-11-29",
-"tasks": [
-{
-"t": "Einen Schreibauftrag üben (Text unter Zeitdruck schreiben)",
-"m": 30
-}
-]
-},
-{
-"date": "2026-12-02",
-"tasks": [
-{
-"t": "Alle Vokabeln abfragen lassen, Grammatik-Übungen kontrollieren",
-"m": 30
-}
-]
-}
-],
-"note": "Am 1.12. ist Physik plus Juniorband und Adventskonzert, darum ist dieser Tag frei."
-},
-{
-"id": "inf-2026-12-21",
-"subject": "Informatik",
-"type": "Kurzarbeit",
-"teacher": "Wo",
-"date": "2026-12-21",
-"source": "OneNote Inf.Wo.9d (wird eingelesen)",
-"topics": [],
-"plan": [
-{
-"date": "2026-12-16",
-"tasks": [
-{
-"t": "Stoff seit Schuljahresbeginn aus dem Notizbuch sammeln",
-"m": 30
-}
-]
-},
-{
-"date": "2026-12-18",
-"tasks": [
-{
-"t": "Aufgaben aus dem Unterricht nochmal selbst lösen",
-"m": 40
-}
-]
-},
-{
-"date": "2026-12-20",
-"tasks": [
-{
-"t": "Fehler wiederholen, Begriffe erklären können",
-"m": 25
-}
-]
-}
-],
-"note": ""
-},
-{
-"id": "deu-2027-02-18",
-"subject": "Deutsch",
-"type": "Schulaufgabe",
-"teacher": "Kl",
-"date": "2027-02-18",
-"topics": [],
-"plan": [],
-"note": "Lernplan kommt etwa drei Wochen vorher. Die Faschingsferien liegen davor (8.–12.2.)."
-},
-{
-"id": "mat-2027-02-25",
-"subject": "Mathematik",
-"type": "Schulaufgabe",
-"teacher": "Gr",
-"date": "2027-02-25",
-"topics": [],
-"plan": [],
-"note": "Lernplan kommt etwa drei Wochen vorher."
-},
-{
-"id": "lat-2027-03-05",
-"subject": "Latein",
-"type": "Schulaufgabe",
-"teacher": "Kö",
-"date": "2027-03-05",
-"topics": [],
-"plan": [],
-"note": "Lernplan kommt etwa drei Wochen vorher."
-},
-{
-"id": "eng-2027-03-17",
-"subject": "Englisch",
-"type": "Mündliche Schulaufgabe",
-"teacher": "Fm",
-"date": "2027-03-17",
-"topics": [],
-"plan": [],
-"note": "Lernplan kommt etwa drei Wochen vorher."
-}
-]
-}
+{"updated": "2026-11-21T21:40:00+01:00", "exams": [{"id": "lat-2026-11-20", "subject": "Latein", "type": "Schulaufgabe", "teacher": "Kö", "date": "2026-11-20", "topics": [], "plan": [], "note": ""}, {"id": "che-2026-11-24", "subject": "Chemie", "type": "Schulaufgabe", "teacher": "Km", "date": "2026-11-24", "source": "OneNote C.Km.9d – Abschnitte I und II, Seite „Stoff für die Schulaufgabe Überblick“", "link": "https://claude.ai/artifact/W7G8HJNCtSGA6Eq4qLX3Cv", "linkText": "Lernzettel Chemie öffnen", "topics": ["Atombau, Nuklidschreibweise, Isotope, mittlere Atommasse (Beispiel Kohlenstoff 12,011 u)", "Radioaktivität, Strahlungstypen und Abschirmung, Halbwertszeit", "Kernspaltung, Kettenreaktion (drei Voraussetzungen!), Oklo, Leichtwasserreaktor (nur Massendefekt)", "Flammenfärbung und Energiestufenmodell, Energiediagramm", "Ionisierungsenergie, IE-Diagramme (Kalium: 1 | 8 | 8 | 2)", "Besetzungsregel 2n², Elektronenkonfiguration (Al 1² 2⁸ 3³), Energiestufendiagramm", "Periodensystem, Alkalimetalle, Halogene, Edelgasregel", "Ionenladungen, Verhältnisformeln, Atom- und Ionenradien", "Redox, Elektrolyse (Zinkiodid im U-Rohr), Schmelzflusselektrolyse, Aluminiumgewinnung"], "plan": [{"date": "2026-11-21", "tasks": [{"t": "Lernzettel Abschnitt 10 (Fallen) lesen", "m": 10}, {"t": "Abschnitte 1–3: Atombau, Radioaktivität, Kettenreaktion – die drei Voraussetzungen auswendig", "m": 20}]}, {"date": "2026-11-22", "tasks": [{"t": "Abschnitte 4–6: Energiediagramm zur Flammenfärbung zeichnen, IE-Diagramm von Kalium erklären, Energiestufendiagramme He, Mg, Cl, Al zeichnen", "m": 45}, {"t": "Abschnitte 7–8: Edelgasregel, Ionenladungen, Verhältnisformeln üben, Ionenradius von Kalium erklären", "m": 45}, {"t": "Karteikarten Chemie: mindestens 80 % gewusst", "m": 15, "cards": true}]}, {"date": "2026-11-23", "tasks": [{"t": "Abschnitt 9: Redoxgleichungen NaCl, Al₂O₃, PbCl₂ aus dem Kopf, U-Rohr-Skizze zeichnen", "m": 40}, {"t": "Alles einmal querlesen, Fehlerliste durchgehen, früh schlafen", "m": 20}, {"t": "Quiz Chemie: mindestens 80 % richtig", "m": 15, "quiz": true}]}], "note": "", "quiz": [{"q": "Wodurch ist ein Element festgelegt?", "o": ["Durch die immer gleiche Protonenzahl seiner Atome", "Durch die Neutronenzahl", "Durch die Nukleonenzahl", "Durch die Masse des Atoms"], "a": 0, "why": "Ein Element ist durch die immer gleiche Protonenzahl seiner Atome festgelegt.", "src": "I. Atombau und gekürztes PSE"}, {"q": "Worin unterscheiden sich Isotope eines Elements?", "o": ["In der Zahl der Protonen", "In der Zahl der Neutronen", "In der Zahl der Elektronen im neutralen Atom", "In der Ordnungszahl"], "a": 1, "why": "Isotope sind Atome eines Elements, die sich in der Zahl der Neutronen unterscheiden.", "src": "I. Atombau und gekürztes PSE"}, {"q": "Kohlenstoff besteht zu 98,9 % aus ¹²C und zu 1,1 % aus ¹³C. Wie groß ist die mittlere Atommasse?", "o": ["12,5 u", "12,011 u", "12,989 u", "13,0 u"], "a": 1, "why": "0,989 · 12 u + 0,011 · 13 u = 12,011 u. Das Ergebnis liegt nah am häufigsten Isotop.", "src": "I. Atombau und gekürztes PSE"}, {"q": "Was gibt die Halbwertszeit an?", "o": ["Die Zeit, bis alle radioaktiven Atome zerfallen sind", "Den Zeitraum, in dem die Hälfte der noch vorhandenen radioaktiven Isotope zerfallen ist", "Die halbe Lebensdauer eines einzelnen Atoms", "Die Zeit, in der sich die Strahlung verdoppelt"], "a": 1, "why": "Die Halbwertszeit gibt den Zeitraum an, in dem die Hälfte der noch vorhandenen radioaktiven Isotope zerfallen ist.", "src": "I. Atombau und gekürztes PSE"}, {"q": "²³⁵U + ¹n → ¹³⁹Ba + ⁹⁵Kr + ? Wie viele Neutronen entstehen?", "o": ["1", "2", "3", "4"], "a": 1, "why": "Links 235 + 1 = 236 Nukleonen. Rechts 139 + 95 = 234, also fehlen 2 Neutronen.", "src": "Aufgaben"}, {"q": "Was passiert bei der Flammenfärbung, wenn ein Elektron vom angeregten Zustand zurückfällt?", "o": ["Es nimmt thermische Energie auf", "Es gibt Licht einer bestimmten Wellenlänge ab", "Es verlässt das Atom", "Es wird zum Proton"], "a": 1, "why": "Beim Zurückfallen auf ihr Ursprungsniveau emittieren die Elektronen Licht einer bestimmten Wellenlänge.", "src": "Das Energiestufenmodell"}, {"q": "Welche Aussage leitet man aus der Flammenfärbung ab?", "o": ["Elektronen können jede beliebige Energie haben", "Elektronen sind bestimmten Energiestufen zugeordnet", "Der Atomkern ist negativ geladen", "Alle Elemente leuchten gleich"], "a": 1, "why": "Neu: das Energiestufenmodell – Elektronen sind bestimmten Energiestufen zugeordnet, die sich in ihrer Energie unterscheiden.", "src": "Das Energiestufenmodell"}, {"q": "Ein Elektron liegt auf einer höheren Energiestufe. Wie ist seine Ionisierungsenergie?", "o": ["Relativ groß", "Relativ klein", "Genau null", "Gleich wie auf der niedrigsten Stufe"], "a": 1, "why": "Elektronen auf niedrigeren Energiestufen haben einen geringeren Abstand zum Kern, werden stärker angezogen und haben eine höhere IE. Auf höheren Stufen ist die IE relativ klein.", "src": "Ionisierungsenergie (IE)"}, {"q": "Warum steigt die IE, wenn man nacheinander alle Elektronen entfernt?", "o": ["Weil der Kern schwerer wird", "Weil die Anziehung des unveränderten, positiv geladenen Kerns wegen weniger Abschirmung stärker auf die verbleibenden Elektronen wirkt", "Weil neue Protonen entstehen", "Weil die Elektronen schneller werden"], "a": 1, "why": "Die Anziehungskraft des unveränderten, positiv geladenen Atomkerns wirkt aufgrund weniger Abschirmungseffekte auf die verbleibenden Elektronen.", "src": "Ionisierungsenergie (IE)"}, {"q": "Im IE-Diagramm von Kalium gibt es große Sprünge nach dem 1., 9. und 17. Elektron. Was folgt daraus?", "o": ["Kalium hat 3 Valenzelektronen", "Die Elektronen verteilen sich 1 | 8 | 8 | 2 auf vier Energiestufen", "Kalium steht in der 2. Periode", "Kalium ist ein Edelgas"], "a": 1, "why": "Ein großer Sprung zeigt eine neue, tiefere Energiestufe. Also 1 Valenzelektron (I. Hauptgruppe) und 4 Energiestufen (4. Periode).", "src": "S. 29"}, {"q": "Wie lautet die Kurzschreibweise der Elektronenkonfiguration von Aluminium?", "o": ["Al 2³ 8² 3¹", "Al 1² 2⁸ 3³", "Al 1³ 2⁸ 3²", "Al 1² 2⁶ 3⁵"], "a": 1, "why": "Die große Zahl ist die Energiestufe, die hochgestellte die Anzahl der enthaltenen Elektronen: 1² 2⁸ 3³.", "src": "3. Die Elektronenkonfiguration"}, {"q": "Wie viele Elektronen passen nach der Besetzungsregel höchstens auf die Energiestufe n = 3?", "o": ["8", "9", "18", "32"], "a": 2, "why": "Maximal 2n² Elektronen: 2 · 3² = 18.", "src": "Ionisierungsenergie (IE)"}, {"q": "Welches Edelgas versucht ein Atom der Hauptgruppen I–III nachzuahmen?", "o": ["Das Edelgas der eigenen Periode", "Das Edelgas der Periode darüber", "Immer Helium", "Immer Argon"], "a": 1, "why": "HG I–III: jedes Atom versucht, das Edelgas der Periode über ihm nachzuahmen. Ladungszahl Kation = Hauptgruppennummer.", "src": "5. Die Edelgasregel"}, {"q": "Welche Ionenladung hat ein Element der VI. Hauptgruppe?", "o": ["6+", "2+", "2−", "6−"], "a": 2, "why": "HG V–VII: Ladungszahl = −8 + Hauptgruppennummer, also −8 + 6 = −2.", "src": "5. Die Edelgasregel"}, {"q": "Wie lautet die Verhältnisformel von Bariumnitrid?", "o": ["BaN", "Ba₂N₃", "Ba₃N₂", "BaN₂"], "a": 2, "why": "Ba²⁺ und N³⁻: kgV(2, 3) = 6, also 3 Ba²⁺ und 2 N³⁻ → Ba₃N₂.", "src": "Verbesserung 1. kleiner schriftlicher Leistungsnachweis"}, {"q": "Warum ist das Kalium-Kation kleiner als das Kalium-Atom?", "o": ["Weil es ein Proton weniger hat", "Weil eine Energiestufe weniger besetzt ist und die effektive Kernladung steigt", "Weil es ein Elektron mehr hat", "Weil Ionen immer kleiner sind als Atome"], "a": 1, "why": "Durch die Abgabe des Valenzelektrons ist eine Energiestufe weniger besetzt. Außerdem ist die effektive Kernladung erhöht, die übrigen Elektronen werden stärker angezogen.", "src": "5. Die Edelgasregel"}, {"q": "Ein Energiestufendiagramm zeigt 18 Elektronen (2 | 8 | 8) und einen Kern mit 17+. Was ist dargestellt?", "o": ["Ein Argon-Atom", "Ein Chlor-Atom", "Ein Chlorid-Ion", "Ein Kalium-Ion"], "a": 2, "why": "17 Protonen bedeuten Chlor. 18 Elektronen bedeuten einfach negativ geladen, also ein Chlorid-Ion.", "src": "8."}, {"q": "Natrium reagiert mit Wasser, Bromthymolblau färbt sich blau. Worauf weist das hin?", "o": ["Auf eine saure Lösung", "Auf eine basische Lösung mit Hydroxid-Ionen", "Auf Chlorid-Ionen", "Auf Sauerstoff"], "a": 1, "why": "Bromthymolblau färbt die Lösung blau: Der Indikator weist auf eine basische Lösung hin, also auf OH⁻-Ionen.", "src": "4. Ausgewählte Hauptgruppen"}, {"q": "Wie kommen Halogene in der Natur meist vor?", "o": ["Gediegen als zweiatomige Moleküle", "Als Anionen in Salzen", "Als Edelgase", "Als Metalle"], "a": 1, "why": "Elementar kommen sie nur als zweiatomige Moleküle vor, in der Natur aber meist als Anionen in Salzen.", "src": "4. Ausgewählte Hauptgruppen"}, {"q": "Was ist eine Elektrolyse?", "o": ["Eine exotherme Reaktion, die Strom erzeugt", "Eine endotherme Reaktion, bei der eine chemische Reaktion mit Hilfe von elektrischem Strom erzwungen wird", "Das Lösen eines Salzes in Wasser", "Eine Kernspaltung"], "a": 1, "why": "Die Elektrolyse ist eine endotherme Reaktion, bei der eine chemische Reaktion mit Hilfe von elektrischem Strom erzwungen wird.", "src": "II. Elektronenübergänge – 1. Elektrolyse"}, {"q": "Was passiert bei der Elektrolyse von Zinkiodid-Lösung am Pluspol?", "o": ["Zn²⁺ + 2 e⁻ → Zn", "2 I⁻ → I₂ + 2 e⁻", "I₂ + 2 e⁻ → 2 I⁻", "Zn → Zn²⁺ + 2 e⁻"], "a": 1, "why": "Am Pluspol (Anode) werden die Iodid-Ionen oxidiert: 2 I⁻ → I₂ + 2 e⁻.", "src": "Geteilte Materialien – zu 1 Übungsversuch"}, {"q": "Wie lautet die Redoxgleichung für die Elektrolyse von Aluminiumoxid?", "o": ["Al³⁺ + O²⁻ → Al + O₂", "2 Al³⁺ + 3 O²⁻ → 2 Al + O₂", "4 Al³⁺ + 6 O²⁻ → 4 Al + 3 O₂", "Al₂O₃ → 2 Al + O₂"], "a": 2, "why": "Red: Al³⁺ + 3 e⁻ → Al | · 4. Ox: 2 O²⁻ → O₂ + 4 e⁻ | · 3. Zusammen: 4 Al³⁺ + 6 O²⁻ → 4 Al + 3 O₂.", "src": "Übungen für die Schulaufgabe"}], "cards": [{"f": "Was legt ein Element fest?", "b": "Die immer gleiche Protonenzahl seiner Atome.", "src": "I. Atombau und gekürztes PSE"}, {"f": "Isotope", "b": "Atome eines Elements, die sich in der Zahl der Neutronen unterscheiden.", "src": "I. Atombau und gekürztes PSE"}, {"f": "Nukleonen", "b": "Kernteilchen: Protonen und Neutronen. m(Neutron) ≈ m(Proton) ≈ 1 u.", "src": "I. Atombau und gekürztes PSE"}, {"f": "Radioaktivität", "b": "Spontaner Zerfall instabiler Atomkerne, der zur Freisetzung radioaktiver Strahlung führt.", "src": "I. Atombau und gekürztes PSE"}, {"f": "Halbwertszeit", "b": "Zeitraum, in dem die Hälfte der noch vorhandenen radioaktiven Isotope zerfallen ist.", "src": "I. Atombau und gekürztes PSE"}, {"f": "Flammenfärbung: Versuchsaufbau", "b": "Verschiedene Salze werden mit einem ausgeglühten Magnesiastäbchen in die rauschende Flamme des Brenners gehalten.", "src": "Das Energiestufenmodell"}, {"f": "Flammenfärbung: Erklärung", "b": "Elektronen werden durch Energiezufuhr in ein erhöhtes Energieniveau angehoben (angeregter Zustand). Beim Zurückfallen emittieren sie Licht einer bestimmten Wellenlänge.", "src": "Das Energiestufenmodell"}, {"f": "Energiestufenmodell", "b": "Elektronen sind bestimmten Energiestufen zugeordnet, die sich in ihrer Energie unterscheiden.", "src": "Das Energiestufenmodell"}, {"f": "Ionisierungsenergie", "b": "Die benötigte Energie, um ein Elektron aus der Hülle eines Atoms zu entfernen.", "src": "Ionisierungsenergie (IE)"}, {"f": "Höhere Energiestufe → IE?", "b": "Relativ kleine IE. Niedrigere Stufen: geringerer Abstand → stärkere Anziehung → höhere IE.", "src": "Ionisierungsenergie (IE)"}, {"f": "Besetzungsregel", "b": "Eine Energiestufe n kann maximal 2n² Elektronen aufnehmen.", "src": "Ionisierungsenergie (IE)"}, {"f": "Elektronenkonfiguration", "b": "Gibt die Verteilung der Elektronen auf die verschiedenen Energiestufen der Atomhülle an, z. B. Al 1² 2⁸ 3³.", "src": "3. Die Elektronenkonfiguration"}, {"f": "Gruppe im PSE", "b": "Elemente mit ähnlichen Eigenschaften stehen untereinander; gleiche Anzahl an Valenzelektronen.", "src": "Erstelle die Energiestufendiagramme …"}, {"f": "Edelgasregel", "b": "Atome der Hauptgruppen streben die Edelgaskonfiguration des im PSE nächstgelegenen Edelgasatoms an (veraltet: Oktettregel; Helium: Duplett).", "src": "5. Die Edelgasregel"}, {"f": "Ionenladung HG V–VII", "b": "−8 + Hauptgruppennummer (Edelgas der eigenen Periode wird nachgeahmt).", "src": "5. Die Edelgasregel"}, {"f": "Halogene als Elemente", "b": "F₂, Cl₂, Br₂, I₂ – elementar nur als zweiatomige Moleküle, in der Natur meist als Anionen in Salzen.", "src": "4. Ausgewählte Hauptgruppen"}, {"f": "Nachweis von Halogenid-Ionen", "b": "Fällung mit Silbernitrat.", "src": "4. Ausgewählte Hauptgruppen"}, {"f": "Edelgaskonfiguration", "b": "Elektronenkonfiguration der 8. Hauptgruppe; energetisch günstig und besonders stabil.", "src": "4. Ausgewählte Hauptgruppen"}, {"f": "Elektrolyse", "b": "Endotherme Reaktion, bei der eine chemische Reaktion mit Hilfe von elektrischem Strom erzwungen wird.", "src": "II. Elektronenübergänge – 1. Elektrolyse"}, {"f": "Bleichlorid: Redox", "b": "Red: Pb²⁺ + 2 e⁻ → Pb. Ox: 2 Cl⁻ → Cl₂ + 2 e⁻. Redox: Pb²⁺ + 2 Cl⁻ → Pb + Cl₂.", "src": "Übungen für die Schulaufgabe"}, {"f": "Salzbildung", "b": "Bei der Reaktion eines Metalls mit einem Nichtmetall kommt es zu einer Elektronenübertragung: Das Metall gibt Elektronen ab (Kationen), das Nichtmetall nimmt sie auf (Anionen).", "src": "Verbesserung 1. kleiner schriftlicher Leistungsnachweis"}]}, {"id": "phy-2026-12-01", "subject": "Physik", "type": "Schulaufgabe", "teacher": "Sp", "date": "2026-12-01", "source": "OneNote Ph.Sp.9d.26-27 (wird eingelesen)", "topics": [], "plan": [{"date": "2026-11-25", "tasks": [{"t": "Stoff sammeln: Hefteinträge seit der letzten Physik-Prüfung im OneNote-Notizbuch durchblättern, Themenliste machen", "m": 30}]}, {"date": "2026-11-26", "tasks": [{"t": "Erste Hälfte der Themen: Hefteinträge lernen, Formeln mit Einheiten aufschreiben", "m": 40}]}, {"date": "2026-11-27", "tasks": [{"t": "Zweite Hälfte der Themen lernen", "m": 40}]}, {"date": "2026-11-29", "tasks": [{"t": "Übungsaufgaben aus Heft und Buch rechnen", "m": 45}]}, {"date": "2026-11-30", "tasks": [{"t": "Fehler aus den Übungen wiederholen, Formelblatt einmal auswendig aufschreiben", "m": 30}]}], "note": "Die genauen Themen trage ich beim nächsten Update aus deinem Physik-Notizbuch ein."}, {"id": "eng-2026-12-03", "subject": "Englisch", "type": "Schulaufgabe", "teacher": "Fm", "date": "2026-12-03", "source": "OneNote E.Fm.9d.26-27 (wird eingelesen)", "topics": [], "plan": [{"date": "2026-11-25", "tasks": [{"t": "Vokabeln der aktuellen Unit, Teil 1", "m": 15}]}, {"date": "2026-11-27", "tasks": [{"t": "Vokabeln Teil 2 und Grammatik der Unit wiederholen", "m": 30}]}, {"date": "2026-11-29", "tasks": [{"t": "Einen Schreibauftrag üben (Text unter Zeitdruck schreiben)", "m": 30}]}, {"date": "2026-12-02", "tasks": [{"t": "Alle Vokabeln abfragen lassen, Grammatik-Übungen kontrollieren", "m": 30}]}], "note": "Am 1.12. ist Physik plus Juniorband und Adventskonzert, darum ist dieser Tag frei."}, {"id": "inf-2026-12-21", "subject": "Informatik", "type": "Kurzarbeit", "teacher": "Wo", "date": "2026-12-21", "source": "OneNote Inf.Wo.9d (wird eingelesen)", "topics": [], "plan": [{"date": "2026-12-16", "tasks": [{"t": "Stoff seit Schuljahresbeginn aus dem Notizbuch sammeln", "m": 30}]}, {"date": "2026-12-18", "tasks": [{"t": "Aufgaben aus dem Unterricht nochmal selbst lösen", "m": 40}]}, {"date": "2026-12-20", "tasks": [{"t": "Fehler wiederholen, Begriffe erklären können", "m": 25}]}], "note": ""}, {"id": "deu-2027-02-18", "subject": "Deutsch", "type": "Schulaufgabe", "teacher": "Kl", "date": "2027-02-18", "topics": [], "plan": [], "note": "Lernplan kommt etwa drei Wochen vorher. Die Faschingsferien liegen davor (8.–12.2.)."}, {"id": "mat-2027-02-25", "subject": "Mathematik", "type": "Schulaufgabe", "teacher": "Gr", "date": "2027-02-25", "topics": [], "plan": [], "note": "Lernplan kommt etwa drei Wochen vorher."}, {"id": "lat-2027-03-05", "subject": "Latein", "type": "Schulaufgabe", "teacher": "Kö", "date": "2027-03-05", "topics": [], "plan": [], "note": "Lernplan kommt etwa drei Wochen vorher."}, {"id": "eng-2027-03-17", "subject": "Englisch", "type": "Mündliche Schulaufgabe", "teacher": "Fm", "date": "2027-03-17", "topics": [], "plan": [], "note": "Lernplan kommt etwa drei Wochen vorher."}]}
 </script>
 <script>
 {
@@ -368,6 +131,7 @@ const pad = n => String(n).padStart(2,'0');
 const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const parse = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
 const now = new Date(); const todayIso = iso(now); const today = parse(todayIso);
+const add = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
 const days = s => Math.round((parse(s) - today) / 864e5);
 const nice = s => { const d = parse(s); return WD[d.getDay()]+', '+d.getDate()+'. '+MON[d.getMonth()]; };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -376,6 +140,91 @@ try { store = JSON.parse(localStorage.getItem('pruef-done') || '{}'); } catch (e
 const save = () => { try { localStorage.setItem('pruef-done', JSON.stringify(store)); } catch (e) {} };
 const key = (ex, day, i) => ex.id + '|' + day.date + '|' + i;
 const countdown = n => n === 0 ? 'heute' : n === 1 ? 'morgen' : 'in ' + n + ' Tagen';
+
+
+/* ---------- Üben: Quiz und Karteikarten ---------- */
+const modal = document.getElementById('modal');
+let best = {}, boxes = {};
+try { best = JSON.parse(localStorage.getItem('pruef-best') || '{}'); boxes = JSON.parse(localStorage.getItem('pruef-boxes') || '{}'); } catch (e) {}
+const saveP = () => { try { localStorage.setItem('pruef-best', JSON.stringify(best)); localStorage.setItem('pruef-boxes', JSON.stringify(boxes)); } catch (e) {} };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const findEx = id => DATA.exams.find(e => e.id === id);
+const close = () => { modal.hidden = true; modal.innerHTML = ''; document.body.style.overflow = ''; };
+const open = html => { modal.innerHTML = '<div class="sheet" role="dialog" aria-modal="true">' + html + '</div>'; modal.hidden = false; document.body.style.overflow = 'hidden'; };
+const markDone = k => {
+  if (!k) return;
+  store[k] = 1; save();
+  document.querySelectorAll('input[data-k]').forEach(x => { if (x.dataset.k === k) { x.checked = true; x.closest('.task').classList.add('done'); } });
+};
+const PASS = 0.8;
+
+function startQuiz(id, taskKey) {
+  const ex = findEx(id); if (!ex || !ex.quiz || !ex.quiz.length) return;
+  const qs = shuffle(ex.quiz).slice(0, Math.min(10, ex.quiz.length)).map(q => { const order = shuffle(q.o.map((_, i) => i)); return { ...q, order }; });
+  let i = 0, right = 0;
+  const show = () => {
+    const q = qs[i];
+    open('<div class="top"><h3>Quiz ' + esc(ex.subject) + ' · ' + (i + 1) + '/' + qs.length + '</h3><button class="x" data-close aria-label="Schließen">×</button></div>' +
+      '<div class="prog"><i style="width:' + (i / qs.length * 100) + '%"></i></div><p class="qq">' + esc(q.q) + '</p>' +
+      q.order.map(o => '<button class="opt" data-o="' + o + '">' + esc(q.o[o]) + '</button>').join('') + '<div id="fb"></div>');
+  };
+  const finish = () => {
+    const pct = Math.round(right / qs.length * 100), ok = right / qs.length >= PASS;
+    best[id] = Math.max(best[id] || 0, pct); saveP();
+    if (ok) markDone(taskKey);
+    open('<div class="top"><h3>Quiz ' + esc(ex.subject) + '</h3><button class="x" data-close aria-label="Schließen">×</button></div>' +
+      '<p class="res">' + pct + ' %</p><p>' + right + ' von ' + qs.length + ' richtig. ' + (ok ? 'Geschafft! ' + (taskKey ? 'Die Aufgabe ist abgehakt.' : '') : 'Für 80 % fehlen noch ' + (Math.ceil(qs.length * PASS) - right) + ' Antworten. Schau dir die falschen nochmal an und versuch es später erneut.') + '</p>' +
+      '<div class="row"><button class="btn" data-close>Fertig</button><button class="btn main" data-again>Nochmal</button></div>' +
+      '<p class="tip">Sich selbst abfragen bringt mehr als nur durchlesen – besonders, wenn du es über mehrere Tage verteilt wiederholst.</p>');
+    modal.querySelector('[data-again]').onclick = () => startQuiz(id, taskKey);
+  };
+  modal.onclick = ev => {
+    if (ev.target === modal || ev.target.closest('[data-close]')) return close();
+    const b = ev.target.closest('.opt'); if (!b || b.disabled) return;
+    const q = qs[i], pick = +b.dataset.o, good = pick === q.a;
+    if (good) right++;
+    modal.querySelectorAll('.opt').forEach(x => { x.disabled = true; if (+x.dataset.o === q.a) x.classList.add('right'); });
+    if (!good) b.classList.add('wrong');
+    document.getElementById('fb').innerHTML = '<p class="why"><b>' + (good ? 'Richtig.' : 'Nicht ganz.') + '</b> ' + esc(q.why) + '<small>Quelle: ' + esc(q.src) + '</small></p><div class="row"><button class="btn main" data-next>' + (i + 1 < qs.length ? 'Weiter' : 'Auswertung') + '</button></div>';
+    modal.querySelector('[data-next]').onclick = ev2 => { ev2.stopPropagation(); i++; i < qs.length ? show() : finish(); };
+  };
+  show();
+}
+
+/* Karteikarten mit drei Fächern: Fach 1 jedes Mal, Fach 2 alle 2 Tage, Fach 3 alle 4 Tage */
+function startCards(id, taskKey) {
+  const ex = findEx(id); if (!ex || !ex.cards || !ex.cards.length) return;
+  const gap = [0, 0, 2, 4], b = boxes[id] = boxes[id] || {};
+  const due = ex.cards.map((c, n) => ({ c, n })).filter(({ n }) => { const s = b[n]; return !s || days(s.next) <= 0; });
+  const deck = shuffle(due.length ? due : ex.cards.map((c, n) => ({ c, n })));
+  let i = 0, known = 0, flipped = false;
+  const show = () => {
+    const { c } = deck[i];
+    open('<div class="top"><h3>Karteikarten ' + esc(ex.subject) + ' · ' + (i + 1) + '/' + deck.length + '</h3><button class="x" data-close aria-label="Schließen">×</button></div>' +
+      '<div class="prog"><i style="width:' + (i / deck.length * 100) + '%"></i></div>' +
+      '<div class="flash' + (flipped ? ' back' : '') + '" data-flip>' + esc(flipped ? c.b : c.f) + (flipped ? '<small class="tip">Quelle: ' + esc(c.src) + '</small>' : '<small class="tip">Antippen zum Umdrehen</small>') + '</div>' +
+      (flipped ? '<div class="row"><button class="btn" data-no>Nochmal</button><button class="btn main" data-yes>Gewusst</button></div>' : ''));
+  };
+  const finish = () => {
+    const pct = Math.round(known / deck.length * 100), ok = known / deck.length >= PASS;
+    saveP(); if (ok) markDone(taskKey);
+    open('<div class="top"><h3>Karteikarten ' + esc(ex.subject) + '</h3><button class="x" data-close aria-label="Schließen">×</button></div>' +
+      '<p class="res">' + pct + ' %</p><p>' + known + ' von ' + deck.length + ' Karten gewusst. ' + (ok ? 'Stark! ' + (taskKey ? 'Die Aufgabe ist abgehakt.' : '') : 'Die nicht gewussten Karten kommen beim nächsten Mal wieder dran.') + '</p>' +
+      '<div class="row"><button class="btn main" data-close>Fertig</button></div><p class="tip">Gewusste Karten kommen erst nach ein paar Tagen wieder – so wiederholst du mit Abstand.</p>');
+  };
+  modal.onclick = ev => {
+    if (ev.target === modal || ev.target.closest('[data-close]')) return close();
+    if (ev.target.closest('[data-flip]') && !flipped) { flipped = true; return show(); }
+    const yes = ev.target.closest('[data-yes]'), no = ev.target.closest('[data-no]');
+    if (!yes && !no) return;
+    const n = deck[i].n, s = b[n] || { box: 1 };
+    s.box = yes ? Math.min(3, s.box + 1) : 1; s.next = add(todayIso, gap[s.box]); b[n] = s;
+    if (yes) known++;
+    i++; flipped = false; i < deck.length ? show() : finish();
+  };
+  show();
+}
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !modal.hidden) close(); });
 
 const upcoming = DATA.exams.filter(e => days(e.date) >= 0).sort((a,b) => a.date.localeCompare(b.date));
 const past = DATA.exams.filter(e => days(e.date) < 0).sort((a,b) => b.date.localeCompare(a.date));
@@ -395,7 +244,7 @@ if (upcoming.length) {
 const taskRow = (ex, day, t, i, withTag) => {
   const k = key(ex, day, i), done = !!store[k], id = 'c' + btoa(unescape(encodeURIComponent(k))).replace(/[^a-z0-9]/gi,'');
   return '<div class="task' + (done ? ' done' : '') + '"><input type="checkbox" id="' + id + '" data-k="' + esc(k) + '"' + (done ? ' checked' : '') + '>' +
-    '<label for="' + id + '">' + (withTag ? '<span class="tag">' + esc(ex.subject) + '</span>' : '') + esc(t.t) + ' <span class="min">· ' + t.m + ' min</span></label></div>';
+    '<label for="' + id + '">' + (withTag ? '<span class="tag">' + esc(ex.subject) + '</span>' : '') + esc(t.t) + ' <span class="min">· ' + t.m + ' min</span></label>' + (t.quiz || t.cards ? '<button class="go" data-' + (t.quiz ? 'quiz' : 'cards') + '="' + esc(ex.id) + '" data-tk="' + esc(k) + '">Starten</button>' : '') + '</div>';
 };
 
 const todayEl = document.getElementById('today');
@@ -414,6 +263,7 @@ const card = (ex, open) => {
     '<span class="pill' + cls + '">' + (n < 0 ? 'vorbei' : countdown(n)) + '</span></button><div class="body">' +
     (ex.topics && ex.topics.length ? '<h3>Stoff</h3><ul class="topics">' + ex.topics.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '') +
     (plan ? '<h3>Lernplan</h3>' + plan : '') +
+    ((ex.quiz && ex.quiz.length) || (ex.cards && ex.cards.length) ? '<div class="prac">' + (ex.quiz && ex.quiz.length ? '<button class="btn" data-quiz="' + esc(ex.id) + '">Quiz (' + Math.min(10, ex.quiz.length) + ' Fragen)</button>' : '') + (ex.cards && ex.cards.length ? '<button class="btn" data-cards="' + esc(ex.id) + '">Karteikarten (' + ex.cards.length + ')</button>' : '') + '</div>' + (best[ex.id] != null ? '<p class="best">Bestes Quiz-Ergebnis: ' + best[ex.id] + ' %</p>' : '') : '') +
     (ex.note ? '<p class="note">' + esc(ex.note) + '</p>' : '') +
     (ex.link ? '<p><a href="' + esc(ex.link) + '" target="_blank" rel="noopener">' + esc(ex.linkText || 'Lernmaterial öffnen') + '</a></p>' : '') +
     (ex.source ? '<p class="src">Quelle: ' + esc(ex.source) + '</p>' : '') + '</div></div>';
@@ -423,6 +273,9 @@ document.getElementById('past').innerHTML = past.map(e => card(e, false)).join('
 if (!past.length) document.getElementById('pastWrap').hidden = true;
 
 document.addEventListener('click', ev => {
+  const qb = ev.target.closest('[data-quiz]:not(.opt)'), cb = ev.target.closest('[data-cards]');
+  if (qb && !modal.contains(qb)) { ev.preventDefault(); return startQuiz(qb.dataset.quiz, qb.dataset.tk); }
+  if (cb && !modal.contains(cb)) { ev.preventDefault(); return startCards(cb.dataset.cards, cb.dataset.tk); }
   const b = ev.target.closest('.exam>button');
   if (b) { const c = b.parentElement; c.classList.toggle('open'); b.setAttribute('aria-expanded', c.classList.contains('open')); }
 });
