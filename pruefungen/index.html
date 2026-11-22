@@ -144,8 +144,10 @@ body[data-bg=schlicht]{background-image:none}
 .chk label{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .chk input{width:22px;height:22px;flex:none;accent-color:var(--blue);margin:1px 0 0}
 .ans{width:100%;font:inherit;font-size:17px;line-height:1.45;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);padding:12px;min-height:140px;margin-top:10px;resize:vertical}
+.ans.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;tab-size:4}
 .ans:focus{outline:3px solid var(--blue);outline-offset:1px}
 .keys{list-style:none;padding:0;margin:10px 0}.keys li{padding:4px 0}
+.modelans.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;white-space:pre}
 .modelans{white-space:pre-line;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:6px}
 details summary{cursor:pointer;color:var(--soft);font-size:14px;padding:8px 0}
 @media(prefers-reduced-motion:no-preference){.exam.open .body{animation:drop .18s ease-out}@keyframes drop{from{opacity:0;transform:translateY(-4px)}}}
@@ -272,18 +274,18 @@ const normTx = s => s.toLowerCase().replace(/[‐-–]/g, '-').replace(/\s+/g, '
 function startWrite(id, wid, taskKey) {
   const ex = findEx(id), w = ex && (ex.writes || []).find(x => x.id === wid); if (!w) return;
   open('<div class="top"><h3>' + esc(w.title) + '</h3><button class="x" data-close aria-label="Schließen">×</button></div>' +
-    '<p class="tip" style="margin-top:4px">' + esc(w.prompt) + '</p><textarea class="ans" id="ans" placeholder="Hier mit der Tastatur tippen …" autocapitalize="sentences" spellcheck="true"></textarea>' +
+    '<p class="tip" style="margin-top:4px">' + esc(w.prompt) + '</p>' + (w.code ? '<textarea class="ans code" id="ans" placeholder="Code hier tippen …" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>' : '<textarea class="ans" id="ans" placeholder="Hier mit der Tastatur tippen …" autocapitalize="sentences" spellcheck="true"></textarea>') +
     '<div class="row"><button class="btn main" data-check>Prüfen</button></div><div id="wres"></div>');
   setTimeout(() => { const a = modal.querySelector('#ans'); if (a) a.focus(); }, 50);
   modal.onclick = ev => {
     if (ev.target === modal || ev.target.closest('[data-close]')) return close();
     if (!ev.target.closest('[data-check]')) return;
-    const raw = modal.querySelector('#ans').value, txt = w.eq ? normEq(raw) : normTx(raw);
-    const hit = w.keys.map(alts => alts.some(a => txt.includes(a)));
+    const raw = modal.querySelector('#ans').value, normCode = s => s.toLowerCase().replace(/\s+/g, ''), txt = w.eq ? normEq(raw) : w.code ? normCode(raw) : normTx(raw);
+    const hit = w.keys.map(alts => alts.some(a => txt.includes(w.code ? normCode(a) : a)));
     const n = hit.filter(Boolean).length, ok = n / w.keys.length >= PASS;
     if (ok) markDone(taskKey);
     modal.querySelector('#wres').innerHTML = '<p><b>' + n + ' von ' + w.keys.length + ' wichtigen Punkten gefunden.</b> ' + (ok ? 'Stark! ' + (taskKey ? 'Die Aufgabe ist abgehakt.' : '') : 'Vergleiche mit der Musterlösung, ergänze deine Antwort und prüfe nochmal.') + '</p>' +
-      '<h4 style="margin:14px 0 4px">Musterlösung</h4><div class="modelans">' + esc(w.model) + '</div><p class="tip">Quelle: ' + esc(w.src) + '</p>';
+      '<h4 style="margin:14px 0 4px">Musterlösung</h4><div class="modelans' + (w.code ? ' code' : '') + '">' + esc(w.model) + '</div><p class="tip">Quelle: ' + esc(w.src) + '</p>';
   };
 }
 
