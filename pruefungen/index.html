@@ -104,6 +104,21 @@ a{color:var(--blue)}
 .res{font-size:56px;font-weight:700;color:var(--blue);margin:10px 0 0}
 .tip{font-size:14px;color:var(--soft);margin-top:10px}
 .learn{margin:14px 0 6px;padding-left:20px}.learn li{margin:0 0 10px;line-height:1.45}
+/* iPad quer und größer: zwei Spalten, Dialoge mittig */
+.cols{display:block}
+@media (min-width:1000px){
+  main{max-width:1240px;padding-left:32px;padding-right:32px}
+  .cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:36px;align-items:start}
+  .colA{padding-bottom:12px}
+  .colB>h2:first-child{margin-top:16px}
+  .hero{margin-top:16px}
+  #modal{align-items:center;padding:24px}
+  .sheet{max-width:720px;border-radius:20px;max-height:86vh;padding:24px 28px}
+  .qq{font-size:21px}
+  .flash{min-height:260px;font-size:22px}
+  #form{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+  #form .btn.main{grid-column:1/-1;max-width:420px;justify-self:center}
+}
 details summary{cursor:pointer;color:var(--soft);font-size:14px;padding:8px 0}
 @media(prefers-reduced-motion:no-preference){.exam.open .body{animation:drop .18s ease-out}@keyframes drop{from{opacity:0;transform:translateY(-4px)}}}
 </style>
@@ -111,14 +126,17 @@ details summary{cursor:pointer;color:var(--soft);font-size:14px;padding:8px 0}
 <body>
 <main>
 <header><h1>Meine Prüfungen</h1><span class="upd" id="upd"></span></header>
+<div class="cols"><div class="colA">
 <section id="hero"></section>
 <section id="overdueWrap" hidden><h2>Fällig <small>noch nicht erledigt</small></h2><div class="today due" id="overdue"></div></section>
 <h2>Heute lernen <small id="todayDate"></small></h2>
 <div class="today" id="today"></div>
+</div><div class="colB">
 <h2>Alle Leistungsnachweise</h2>
 <div id="list"></div>
 <details id="pastWrap"><summary>Vorbei</summary><div id="past"></div></details>
 <p class="src">Termine aus deinem Schulkalender (Eltern-Portal, über Outlook „CHG Noah 9“), Stoff aus deinen OneNote-Kursnotizbüchern. Wird Montag bis Freitag um 12:50 aktualisiert. Abgehakte Aufgaben merkt sich nur dieses Gerät.</p>
+</div></div>
 </main>
 
 <div id="modal" hidden></div>
