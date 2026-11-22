@@ -112,6 +112,21 @@ h2 small{font-weight:400;font-size:14px;color:var(--soft)}
   #form{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
   #form .btn.main{grid-column:1/-1;max-width:420px;justify-self:center}
 }
+.hd-r{display:flex;align-items:center;gap:10px}
+.gear{all:unset;box-sizing:border-box;width:44px;height:44px;display:grid;place-content:center;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.gear:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.gear svg{width:22px;height:22px}
+body[data-bg=karo]{background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px}
+body[data-bg=linien]{background-image:linear-gradient(var(--grid) 1px,transparent 1px);background-size:100% 26px}
+body[data-bg=punkte]{background-image:radial-gradient(var(--grid) 1.3px,transparent 1.6px);background-size:20px 20px}
+body[data-bg=rauschen]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:180px 180px}
+body[data-bg=schlicht]{background-image:none}
+.set h4{margin:18px 0 8px;font-size:15px}
+.sw{display:flex;flex-wrap:wrap;gap:10px}
+.sw button{font:inherit;display:flex;align-items:center;gap:8px;min-height:44px;padding:6px 14px 6px 8px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.sw button[aria-pressed=true]{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue) inset}
+.sw i{width:26px;height:26px;border-radius:8px;display:block;border:1px solid var(--line)}
+.modeinfo{font-size:14px;color:var(--soft);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:12px}
 details summary{cursor:pointer;color:var(--soft);font-size:14px;padding:8px 0}
 /* Fragebogen */
 #setup{display:none}
@@ -155,7 +170,7 @@ body.setup #setup{display:block}body.setup #app{display:none}
 </section>
 
 <section id="app">
-  <header><h1>Prüfungen 9d</h1><span class="upd" id="upd"></span></header>
+  <header><h1>Prüfungen 9d</h1><div class="hd-r"><span class="upd" id="upd"></span><button class="gear" id="gear" type="button" aria-label="Einstellungen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div></header>
   <div class="cols"><div class="colA">
   <section id="hero"></section>
   <h2>Heute lernen <small id="todayDate"></small></h2>
@@ -447,6 +462,49 @@ render();
     if (prefs) render();
   } catch (e) {}
 })();
+
+/* ---------- Einstellungen: Farbe und Hintergrund, getrennt für Hell- und Dunkelmodus ---------- */
+const COLORS = {
+  rot:    { name: 'Rot',    light: ['#c42238', '#b3141c'], dark: ['#ee4141', '#d8333a'] },
+  blau:   { name: 'Blau',   light: ['#1d4ed8', '#1e3a8a'], dark: ['#3b6cf6', '#5b82f7'] },
+  gruen:  { name: 'Grün',   light: ['#15803d', '#166534'], dark: ['#1f9d55', '#34b46a'] },
+  lila:   { name: 'Lila',   light: ['#7c3aed', '#5b21b6'], dark: ['#8b5cf6', '#a07cf8'] },
+  orange: { name: 'Orange', light: ['#c2410c', '#9a3412'], dark: ['#e8590c', '#f07a3a'] }
+};
+const BGS = { karo: 'Karo', linien: 'Linien', punkte: 'Punkte', rauschen: 'Rauschen', schlicht: 'Schlicht' };
+const DEF = { c: 'rot', bg: 'karo' };
+let theme = {};
+try { theme = JSON.parse(localStorage.getItem('theme-v1') || '{}') || {}; } catch (e) {}
+const saveTheme = () => { try { localStorage.setItem('theme-v1', JSON.stringify(theme)); } catch (e) {} };
+const curMode = () => { const t = document.documentElement.dataset.theme; if (t === 'dark' || t === 'light') return t; return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; };
+const applyTheme = () => {
+  const m = curMode(), s = { ...DEF, ...(theme[m] || {}) }, c = COLORS[s.c] || COLORS.rot;
+  const r = document.documentElement.style;
+  r.setProperty('--blue', c[m][0]); r.setProperty('--red', c[m][1]);
+  document.body.dataset.bg = BGS[s.bg] ? s.bg : 'karo';
+};
+function openSettings() {
+  const m = curMode(), s = { ...DEF, ...(theme[m] || {}) }, other = m === 'dark' ? 'Hellmodus' : 'Dunkelmodus';
+  open('<div class="top"><h3>Einstellungen</h3><button class="x" data-close aria-label="Schließen">×</button></div><div class="set">' +
+    '<p class="modeinfo">Du bearbeitest gerade den <b>' + (m === 'dark' ? 'Dunkelmodus' : 'Hellmodus') + '</b>. Der ' + other + ' behält seine eigenen Einstellungen. Um ihn zu ändern, schalte dein Gerät in den ' + other + '.</p>' +
+    '<h4>Hauptfarbe</h4><div class="sw">' + Object.entries(COLORS).map(([k, c]) => '<button type="button" data-col="' + k + '" aria-pressed="' + (s.c === k) + '"><i style="background:' + c[m][0] + '"></i>' + c.name + '</button>').join('') + '</div>' +
+    '<h4>Hintergrund</h4><div class="sw">' + Object.entries(BGS).map(([k, n]) => '<button type="button" data-bgk="' + k + '" aria-pressed="' + (s.bg === k) + '">' + n + '</button>').join('') + '</div>' +
+    (document.getElementById('edit') ? '<h4>Deine Angaben</h4><div class="sw"><button type="button" data-redo>Religion/Ethik, freie Tage und Lernzeit ändern</button></div>' : '') +
+    '<div class="row"><button class="btn main" data-close>Fertig</button></div></div>');
+  modal.onclick = ev => {
+    if (ev.target === modal || ev.target.closest('[data-close]')) return close();
+    if (ev.target.closest('[data-redo]')) { close(); return document.getElementById('edit').click(); }
+    const col = ev.target.closest('[data-col]'), bg = ev.target.closest('[data-bgk]');
+    if (!col && !bg) return;
+    const mm = curMode(); theme[mm] = { ...DEF, ...(theme[mm] || {}) };
+    if (col) theme[mm].c = col.dataset.col; else theme[mm].bg = bg.dataset.bgk;
+    saveTheme(); applyTheme(); openSettings();
+  };
+}
+document.getElementById('gear').addEventListener('click', openSettings);
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme); } catch (e) {}
+applyTheme();
 }
 </script>
 </body>
