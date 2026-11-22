@@ -619,5 +619,52 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden)chk(
 window.addEventListener('focus',chk);window.addEventListener('pageshow',chk);
 setInterval(chk,60000);})();
 </script>
+<script>
+/* Fortschritt sichern: Häkchen, Quiz-Ergebnisse, Karteikarten und Einstellungen werden
+   zusätzlich im eigenen, privaten Speicher des Claude-Kontos abgelegt (nur auf claude.ai).
+   Wird der Gerätespeicher geleert, holt die App alles von dort zurück. */
+(function(){
+var KEYS=["klasse-done","klasse-sched","klasse-best","klasse-boxes","klasse-prefs","theme-v1"], DOC='fortschritt-9d';
+function get(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function put(k,v){try{localStorage.setItem(k,v);return localStorage.getItem(k)===v;}catch(e){return false;}}
+function snap(){var o={};KEYS.forEach(function(k){var v=get(k);if(v!=null)o[k]=v;});return o;}
+function obj(v){try{var x=JSON.parse(v);return x&&typeof x==='object'&&!Array.isArray(x)?x:null;}catch(e){return null;}}
+(async function(){
+  try{
+    if(!window.claude||typeof claude.use!=='function')return;
+    var db=await claude.use('db'),user=await claude.use('user');if(!db||!user)return;
+    var id=await user.id();if(!id)return;
+    var ref=db.collection('data/users/'+id).doc(DOC);
+    var r=await Promise.race([ref.get(),new Promise(function(_,j){setTimeout(function(){j(new Error('timeout'));},10000);})]);
+    if(r&&typeof r.data==='function')r=r.data();
+    if(r&&r.data&&r.data.vals)r=r.data;
+    var lts=+get('sync-ts')||0,cur=snap();
+    if(r&&r.vals&&(+r.ts||0)>lts){
+      var neu={},ok=true;
+      KEYS.forEach(function(k){
+        var rv=r.vals[k],lv=cur[k];
+        if(rv==null){if(lv!=null)neu[k]=lv;return;}
+        /* noch nie abgeglichen: beides zusammenführen, damit nichts verloren geht */
+        if(!lts&&lv!=null){var a=obj(rv),b=obj(lv);if(a&&b){var m={};for(var x in a)m[x]=a[x];for(var y in b)m[y]=b[y];neu[k]=JSON.stringify(m);return;}}
+        neu[k]=rv;
+      });
+      if(JSON.stringify(neu)!==JSON.stringify(cur)){
+        for(var k in neu)ok=put(k,neu[k])&&ok;
+        if(ok&&put('sync-ts',String(lts?r.ts:Date.now()))){location.reload();return;}
+      } else put('sync-ts',String(r.ts));
+    }
+    var last=r&&r.vals?JSON.stringify(r.vals):'',busy=false;
+    var push=async function(){
+      if(busy)return;var s=JSON.stringify(snap());if(s===last)return;
+      busy=true;var ts=Date.now();
+      try{await ref.set({ts:ts,vals:JSON.parse(s)});last=s;put('sync-ts',String(ts));}catch(e){}
+      busy=false;
+    };
+    push();setInterval(push,3000);
+    document.addEventListener('visibilitychange',function(){if(document.hidden)push();});
+  }catch(e){}
+})();
+})();
+</script>
 </body>
 </html>
