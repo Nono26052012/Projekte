@@ -45,6 +45,7 @@ h1{font-size:32px;line-height:1.05;margin:6px 0}
 .hero.today .n{color:#ffe3a3}
 h2{font-size:20px;margin:26px 0 10px;display:flex;align-items:baseline;gap:10px}
 h2 small{font-weight:400;font-size:14px;color:var(--soft)}
+.today.due{border-color:var(--red);border-width:1.5px}
 .today{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 14px}
 .task{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
 .task:last-child{border-bottom:0}
@@ -110,6 +111,7 @@ details summary{cursor:pointer;color:var(--soft);font-size:14px;padding:8px 0}
 <main>
 <header><h1>Meine Prüfungen</h1><span class="upd" id="upd"></span></header>
 <section id="hero"></section>
+<section id="overdueWrap" hidden><h2>Fällig <small>noch nicht erledigt</small></h2><div class="today due" id="overdue"></div></section>
 <h2>Heute lernen <small id="todayDate"></small></h2>
 <div class="today" id="today"></div>
 <h2>Alle Leistungsnachweise</h2>
@@ -153,7 +155,7 @@ const close = () => { modal.hidden = true; modal.innerHTML = ''; document.body.s
 const open = html => { modal.innerHTML = '<div class="sheet" role="dialog" aria-modal="true">' + html + '</div>'; modal.hidden = false; document.body.style.overflow = 'hidden'; };
 const markDone = k => {
   if (!k) return;
-  store[k] = 1; save();
+  store[k] = 1; save(); setTimeout(() => refreshDue(), 0);
   document.querySelectorAll('input[data-k]').forEach(x => { if (x.dataset.k === k) { x.checked = true; x.closest('.task').classList.add('done'); } });
 };
 const PASS = 0.8;
@@ -250,6 +252,12 @@ const taskRow = (ex, day, t, i, withTag) => {
 const todayEl = document.getElementById('today');
 const todays = [];
 upcoming.forEach(ex => (ex.plan || []).forEach(day => { if (day.date === todayIso) day.tasks.forEach((t,i) => todays.push(taskRow(ex, day, t, i, true))); }));
+const dueRows = [];
+upcoming.forEach(ex => (ex.plan || []).forEach(day => { if (day.date < todayIso) day.tasks.forEach((t, i) => { if (!store[key(ex, day, i)]) dueRows.push({ d: day.date, html: taskRow(ex, day, t, i, true).replace('<span class="tag">', '<span class="tag">' + WD[parse(day.date).getDay()] + ' ' + parse(day.date).getDate() + '.' + (parse(day.date).getMonth() + 1) + '. · ') }); }); }));
+dueRows.sort((a, b) => a.d.localeCompare(b.d));
+const refreshDue = () => { const n = document.querySelectorAll('#overdue .task:not(.done)').length; document.getElementById('overdueWrap').hidden = n === 0; };
+document.getElementById('overdue').innerHTML = dueRows.map(r => r.html).join('');
+document.getElementById('overdueWrap').hidden = !dueRows.length;
 todayEl.innerHTML = todays.length ? todays.join('') : '<p class="empty">Heute steht nichts im Plan. Frei!</p>';
 
 const card = (ex, open) => {
@@ -283,6 +291,7 @@ document.addEventListener('change', ev => {
   const c = ev.target; if (!c.dataset || !c.dataset.k) return;
   if (c.checked) store[c.dataset.k] = 1; else delete store[c.dataset.k];
   save();
+  setTimeout(refreshDue, 0);
   document.querySelectorAll('input[data-k]').forEach(x => { if (x.dataset.k === c.dataset.k) { x.checked = c.checked; x.closest('.task').classList.toggle('done', c.checked); } });
 });
 }
