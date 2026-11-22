@@ -100,13 +100,13 @@ h2 small{font-weight:400;font-size:14px;color:var(--soft)}
 /* iPad quer und größer: zwei Spalten, Dialoge mittig */
 .cols{display:block}
 @media (min-width:1000px){
-  main{max-width:1240px;padding-left:32px;padding-right:32px}
-  .cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:36px;align-items:start}
+  main{max-width:none;padding-left:max(40px,env(safe-area-inset-left));padding-right:max(40px,env(safe-area-inset-right))}
+  .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;align-items:start}
   .colA{padding-bottom:12px}
   .colB>h2:first-child{margin-top:16px}
   .hero{margin-top:16px}
   #modal{align-items:center;padding:24px}
-  .sheet{max-width:720px;border-radius:20px;max-height:86vh;padding:24px 28px}
+  .sheet{max-width:min(1000px,88vw);border-radius:20px;max-height:90vh;padding:28px 36px}
   .qq{font-size:21px}
   .flash{min-height:260px;font-size:22px}
   #form{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
