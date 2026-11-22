@@ -594,5 +594,13 @@ try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', appl
 applyTheme();
 }
 </script>
+<script>
+/* Neuer Tag: App neu laden, damit Countdown und "Heute lernen" stimmen */
+(function(){var d0=new Date().toDateString();
+function chk(){if(new Date().toDateString()!==d0)location.reload();}
+document.addEventListener('visibilitychange',function(){if(!document.hidden)chk();});
+window.addEventListener('focus',chk);window.addEventListener('pageshow',chk);
+setInterval(chk,60000);})();
+</script>
 </body>
 </html>
