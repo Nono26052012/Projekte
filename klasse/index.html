@@ -41,6 +41,7 @@ h1{font-size:32px;line-height:1.05;margin:6px 0}
 h2{font-size:20px;margin:26px 0 10px;display:flex;align-items:baseline;gap:10px}
 h2 small{font-weight:400;font-size:14px;color:var(--soft)}
 .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 14px}
+.box.due{border-color:var(--red);border-width:1.5px}
 .task{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
 .task:last-child{border-bottom:0}
 .task input{appearance:none;flex:none;width:24px;height:24px;border:2px solid var(--blue);border-radius:6px;margin:1px 0 0;cursor:pointer;display:grid;place-content:center;background:var(--card)}
@@ -188,6 +189,7 @@ body.setup #setup{display:block}body.setup #app{display:none}
   <header><h1>Prüfungen 9d</h1><div class="hd-r"><span class="upd" id="upd"></span><button class="gear" id="gear" type="button" aria-label="Einstellungen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div></header>
   <div class="cols"><div class="colA">
   <section id="hero"></section>
+  <section id="overdueWrap" hidden><h2>Fällig <small>noch nicht erledigt</small></h2><div class="box due" id="overdue"></div></section>
   <h2>Heute lernen <small id="todayDate"></small></h2>
   <div class="box" id="today"></div>
   </div><div class="colB">
@@ -281,10 +283,16 @@ const baseSteps = ex => {
 };
 
 /* Plan rückwärts ab dem Prüfungstag verteilen, frühere Prüfungen zuerst */
+let sched = {}; try { sched = JSON.parse(localStorage.getItem('klasse-sched') || '{}') || {}; } catch (e) {}
+const saveSched = () => { try { localStorage.setItem('klasse-sched', JSON.stringify(sched)); } catch (e) {} };
+const refreshDue = () => { const w = document.getElementById('overdueWrap'); if (w) w.hidden = !document.querySelectorAll('#overdue .task:not(.done)').length; };
 const buildPlans = exams => {
   const load = {}, examDays = new Set(exams.map(e => e.date));
   exams.forEach(ex => {
-    const st = steps(ex), plan = {};
+    const all = steps(ex), plan = {}, fixed = {};
+    /* Aufgaben, deren Tag schon vorbei ist, bleiben an ihrem Tag (erledigt oder fällig) und werden nicht neu verplant */
+    const st = all.filter(s => { const k = ex.id + '|' + s[0], d = sched[k];
+      if (d && d < todayIso) { (fixed[d] = fixed[d] || []).push({ t: s[0], m: s[1], k, ...(s[2] || {}) }); return false; } return true; });
     let day = add(ex.date, -1), limit = st.length * 3 + 4;
     for (let i = st.length - 1; i >= 0 && limit > 0; ) {
       if (day < todayIso) {
@@ -306,6 +314,7 @@ const buildPlans = exams => {
       if (free) { (plan[day] = plan[day] || []).unshift({ t: st[i][0], m: st[i][1], k: ex.id + '|' + st[i][0], ...(st[i][2] || {}) }); load[day] = used + st[i][1]; i--; }
       else { day = add(day, -1); limit--; }
     }
+    for (const d in fixed) plan[d] = fixed[d].concat(plan[d] || []);
     ex.plan = Object.keys(plan).sort().map(d => ({ date: d, tasks: plan[d] }));
   });
 };
@@ -322,7 +331,7 @@ const close = () => { modal.hidden = true; modal.innerHTML = ''; document.body.s
 const open = html => { modal.innerHTML = '<div class="sheet" role="dialog" aria-modal="true">' + html + '</div>'; modal.hidden = false; document.body.style.overflow = 'hidden'; };
 const markDone = k => {
   if (!k) return;
-  done[k] = 1; store('klasse-done', done);
+  done[k] = 1; store('klasse-done', done); setTimeout(refreshDue, 0);
   document.querySelectorAll('input[data-k]').forEach(x => { if (x.dataset.k === k) { x.checked = true; x.closest('.task').classList.add('done'); } });
 };
 const PASS = 0.8;
@@ -506,7 +515,15 @@ const render = () => {
   document.getElementById('hero').innerHTML = e0 ? (n => '<div class="hero"><div class="n">' + (n === 0 ? '!' : n) + '</div><div class="unit">' +
     (n === 0 ? 'heute ist es so weit' : n === 1 ? 'Tag noch bis' : 'Tage noch bis') + '</div><div class="what">' + esc(e0.subject) + ' · ' + esc(e0.type) + '</div><div class="when">' + nice(e0.date) + '</div></div>')(days(e0.date)) : '<p class="empty">Keine Prüfungen eingetragen.</p>';
   const todays = [];
-  upcoming.forEach(ex => ex.plan.forEach(day => { if (day.date === todayIso) day.tasks.forEach(t => todays.push(taskRow(ex, t, true))); }));
+  const dues = [];
+  upcoming.forEach(ex => ex.plan.forEach(day => {
+    if (day.date === todayIso) day.tasks.forEach(t => { todays.push(taskRow(ex, t, true)); if (!sched[t.k]) sched[t.k] = todayIso; });
+    else if (day.date < todayIso) day.tasks.forEach(t => { if (!done[t.k]) { const pd = parse(day.date); dues.push({ d: day.date, html: taskRow(ex, t, true).replace('<span class="tag">', '<span class="tag">' + WD[pd.getDay()] + ' ' + pd.getDate() + '.' + (pd.getMonth() + 1) + '. · ') }); } });
+  }));
+  saveSched();
+  dues.sort((a, b) => a.d.localeCompare(b.d));
+  document.getElementById('overdue').innerHTML = dues.map(r => r.html).join('');
+  refreshDue();
   document.getElementById('today').innerHTML = todays.join('') || '<p class="empty">Heute steht nichts im Plan. Frei!</p>';
   document.getElementById('list').innerHTML = upcoming.map((e, i) => card(e, i === 0)).join('') || '<p class="empty">Nichts geplant.</p>';
   document.getElementById('past').innerHTML = past.map(e => card(e, false)).join('');
@@ -528,7 +545,7 @@ document.addEventListener('click', ev => {
 document.addEventListener('change', ev => {
   const c = ev.target; if (!c.dataset || !c.dataset.k) return;
   if (c.checked) done[c.dataset.k] = 1; else delete done[c.dataset.k];
-  store('klasse-done', done);
+  store('klasse-done', done); setTimeout(refreshDue, 0);
   document.querySelectorAll('input[data-k]').forEach(x => { if (x.dataset.k === c.dataset.k) { x.checked = c.checked; x.closest('.task').classList.toggle('done', c.checked); } });
 });
 render();
