@@ -91,16 +91,29 @@
       gap.push({ k: 'gap', id: 'G' + i, u: g.u, pre: g.t.slice(0, m.index), post: g.t.slice(m.index + m[0].length), ans: m[1], alt: m[2] ? m[2].split('/') : [] });
     });
     (ex.writes || []).forEach(function (w, i) { if (w.keys && w.keys.length) wr.push({ k: 'wr', id: 'w' + i, u: w.u, w: w }); });
-    return { mc: mc, tf: tf, gap: gap, wr: wr };
+    /* Vokabeln / Karteikarten: tippen, ankreuzen, wahr/falsch */
+    var voc = [], cards = (ex.cards || []).filter(function (c) { return c && c.f && c.b; });
+    cards.forEach(function (c, i) {
+      voc.push({ k: 'voc', id: 'v' + i, src: 'c' + i, card: 1, q: c.f, ans: c.b });
+      if (cards.length >= 4) {
+        var others = shuffle(cards.filter(function (_, j) { return j !== i; })).slice(0, 3).map(function (o) { return o.b; });
+        var o = shuffle([c.b].concat(others));
+        mc.push({ k: 'mc', id: 'cm' + i, src: 'c' + i, card: 1, q: c.f, o: o, a: o.indexOf(c.b), why: c.f + ' – ' + c.b });
+        var right = Math.random() < 0.5, show = right ? c.b : others[0];
+        tf.push({ k: 'tf', id: 'ct' + i, src: 'c' + i, card: 1, q: c.f, ans: show, a: right, right: c.b, why: c.f + ' – ' + c.b });
+      }
+    });
+    return { mc: mc, tf: tf, gap: gap, wr: wr, voc: voc };
   }
+  function alts(x) { var a = String(x || '').split(/\s*[,;/]\s*|\s+oder\s+/i).filter(Boolean); a.push(String(x || '')); return a.concat(a.map(function (v) { return v.replace(/^(to|the|a|an|der|die|das|ein|eine)\s+/i, ''); })); }
   function pts(it) { return it.k === 'wr' ? Math.min(3, it.w.keys.length) : 1; }
 
   function build(ex, cfg, only) {
     var P = pool(ex), allUnits = !(ex.units && ex.units.length) || cfg.units.length === ex.units.length;
     function inUnits(it) { return it.k === 'wr' ? (it.u ? cfg.units.indexOf(it.u) >= 0 : allUnits) : (!it.u || !(ex.units && ex.units.length) || cfg.units.indexOf(it.u) >= 0); }
     var pools = {};
-    ['mc', 'tf', 'gap', 'wr'].forEach(function (t) {
-      pools[t] = shuffle(P[t].filter(function (it) { return cfg.types.indexOf(t) >= 0 && inUnits(it) && (!only || only.indexOf(it.k + ':' + it.id) >= 0); }));
+    ['mc', 'tf', 'gap', 'wr', 'voc'].forEach(function (t) {
+      pools[t] = shuffle(P[t].filter(function (it) { return cfg.types.indexOf(t) >= 0 && inUnits(it) && (!cfg.only || cfg.only(it)) && (!only || only.indexOf(it.k + ':' + it.id) >= 0); }));
     });
     var out = [], usedSrc = {}, order = shuffle(cfg.types.slice()), n = only ? 1e9 : cfg.n, guard = 0, maxWr = only ? 1e9 : Math.max(1, Math.round(n * 0.2));
     while (out.length < n && guard++ < 1000) {
@@ -113,9 +126,10 @@
       if (!added) break;
     }
     /* Reihenfolge wie in einer Probe: erst Ankreuzen, dann Lücken, dann Schreiben */
-    var rank = { tf: 0, mc: 1, gap: 2, wr: 3 };
+    var rank = { tf: 0, mc: 1, voc: 2, gap: 2, wr: 3 };
     return out.sort(function (a, b) { return rank[a.k] - rank[b.k]; });
   }
+  var TYPES = ['mc', 'tf', 'gap', 'voc', 'wr'], tn = { mc: 'Ankreuzen', tf: 'Wahr / Falsch', gap: 'Lückentext', voc: 'Vokabeln tippen', wr: 'Tippen' };
   function noteOf(p) { return p >= 0.85 ? 1 : p >= 0.70 ? 2 : p >= 0.55 ? 3 : p >= 0.40 ? 4 : p >= 0.20 ? 5 : 6; }
 
   /* ---------- Ansichten ---------- */
@@ -128,13 +142,13 @@
   function setup(exId) {
     var ex = findEx(exId); if (!ex) return;
     var P = pool(ex), units = ex.units || [];
-    var cfg = S && S.ex === ex && S.cfg ? S.cfg : { units: units.map(function (u) { return u.id; }), n: 15, types: ['mc', 'tf', 'gap', 'wr'].filter(function (t) { return P[t].length; }) };
+    var cfg = S && S.ex === ex && S.cfg && !S.cfg.only ? S.cfg : { units: units.map(function (u) { return u.id; }), n: 15, types: TYPES.filter(function (t) { return P[t].length; }) };
     S = { ex: ex, cfg: cfg };
-    var tn = { mc: 'Ankreuzen', tf: 'Wahr / Falsch', gap: 'Lückentext', wr: 'Tippen' };
+
     var h = '<p class="pt-tip">Wie eine Probe: gemischte Aufgaben aus den Bereichen, die du auswählst. Danach bekommst du Punkte, eine geschätzte Note und die Verbesserung.</p>';
     if (units.length) h += '<h4>Bereiche</h4><div class="pt-chips">' + units.map(function (u) { return '<button class="chip' + (cfg.units.indexOf(u.id) >= 0 ? ' on' : '') + '" data-a="unit" data-u="' + esc(u.id) + '">' + esc(u.title) + '</button>'; }).join('') +
       '<button class="chip" data-a="allu">' + (cfg.units.length === units.length ? 'Keine' : 'Alle') + '</button></div>';
-    h += '<h4>Aufgabentypen</h4><div class="pt-chips">' + ['mc', 'tf', 'gap', 'wr'].filter(function (t) { return P[t].length; }).map(function (t) { return '<button class="chip' + (cfg.types.indexOf(t) >= 0 ? ' on' : '') + '" data-a="type" data-t="' + t + '">' + tn[t] + '</button>'; }).join('') + '</div>';
+    h += '<h4>Aufgabentypen</h4><div class="pt-chips">' + TYPES.filter(function (t) { return P[t].length; }).map(function (t) { return '<button class="chip' + (cfg.types.indexOf(t) >= 0 ? ' on' : '') + '" data-a="type" data-t="' + t + '">' + tn[t] + '</button>'; }).join('') + '</div>';
     h += '<h4>Länge</h4><div class="pt-chips">' + [10, 15, 25].map(function (n) { return '<button class="chip' + (cfg.n === n ? ' on' : '') + '" data-a="n" data-n="' + n + '">' + n + ' Aufgaben</button>'; }).join('') + '<button class="chip' + (cfg.n === 999 ? ' on' : '') + '" data-a="n" data-n="999">Alles</button></div>';
     var cnt = build(ex, cfg).length;
     h += '<div class="pt-row"><button class="pt-btn" data-a="start"' + (cnt ? '' : ' disabled') + '>Test starten (' + cnt + ' Aufgaben)</button></div>';
@@ -157,6 +171,8 @@
         [true, false].map(function (v) { var c = (a === v ? ' sel' : '') + (graded && v === it.a ? ' right' : ''); return '<button class="pt-opt' + c + '" data-a="tf" data-i="' + i + '" data-v="' + v + '"' + (graded ? ' disabled' : '') + '>' + (v ? 'Wahr' : 'Falsch') + '</button>'; }).join('') + '</div>';
     } else if (it.k === 'gap') {
       h += '<div class="pt-qt">Ergänze die Lücke:<br>' + esc(it.pre) + '<input class="pt-gap" data-a="gap" data-i="' + i + '" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + esc(a || '') + '"' + (graded ? ' disabled' : '') + '>' + esc(it.post) + '</div>';
+    } else if (it.k === 'voc') {
+      h += '<div class="pt-qt">' + esc(it.q) + '<br><input class="pt-gap" style="width:14em;margin-top:8px" data-a="gap" data-i="' + i + '" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Bedeutung" value="' + esc(a || '') + '"' + (graded ? ' disabled' : '') + '></div>';
     } else {
       h += '<div class="pt-qt">' + esc(it.w.prompt || it.w.title) + '</div><textarea data-a="wr" data-i="' + i + '"' + (graded ? ' disabled' : '') + ' autocapitalize="off" spellcheck="false" placeholder="Deine Antwort">' + esc(a || '') + '</textarea>';
     }
@@ -169,8 +185,12 @@
     S.items = items; S.ans = items.map(function () { return null; }); S.res = null;
     var h = '<p class="pt-tip">' + items.length + ' Aufgaben · ' + items.reduce(function (s, it) { return s + pts(it); }, 0) + ' Punkte. Nimm dir Zeit wie in einer echten Probe – die Lösungen kommen erst nach dem Abgeben.</p>';
     h += items.map(function (it, i) { return qHtml(it, i, false); }).join('');
-    h += '<div class="pt-row"><button class="pt-btn" data-a="submit">Abgeben</button><button class="pt-btn sec" data-a="back">Abbrechen</button></div>';
-    show(frame('Probetest ' + S.ex.subject, h));
+    h += '<div class="pt-row"><button class="pt-btn" data-a="submit">' + (S.practice ? 'Fertig – auswerten' : 'Abgeben') + '</button><button class="pt-btn sec" data-a="back">Abbrechen</button></div>';
+    show(frame(S.practice ? S.ex.subject + ': ' + S.practice : 'Probetest ' + S.ex.subject, h));
+  }
+  function markTask(k) {
+    var box = [].slice.call(document.querySelectorAll('input[data-k]')).filter(function (x) { return x.dataset.k === k; })[0];
+    if (box && !box.checked) box.click();
   }
 
   function grade() {
@@ -179,6 +199,7 @@
       var a = S.ans[i], m = pts(it), p = 0, fb = '';
       if (it.k === 'mc') { p = a === it.a ? 1 : 0; fb = p ? '<b>Richtig.</b>' : '<b>Richtig wäre: ' + esc(it.o[it.a]) + '</b>'; if (it.why) fb += esc(it.why); }
       else if (it.k === 'tf') { p = a === it.a ? 1 : 0; fb = '<b>' + (p ? 'Richtig – ' : 'Falsch – ') + 'die Aussage ist ' + (it.a ? 'wahr' : 'falsch') + '.</b>' + (!it.a && it.right ? 'Richtig ist: ' + esc(it.right) + '. ' : '') + esc(it.why || ''); }
+      else if (it.k === 'voc') { var na = norm(a), nb = norm(String(a || '').trim().replace(/^(to|the|a|an|der|die|das|ein|eine)\s+/i, '')); p = !!na && alts(it.ans).some(function (x) { var nx = norm(x); return nx === na || nx === nb; }) ? 1 : 0; fb = p ? '<b>Richtig.</b>' + (norm(it.ans) !== na ? 'Komplett: ' + esc(it.ans) : '') : '<b>Richtig wäre: ' + esc(it.ans) + '</b>'; }
       else if (it.k === 'gap') { var ok = [it.ans].concat(it.alt || []).some(function (x) { return norm(x) === norm(a); }); p = ok ? 1 : 0; fb = p ? '<b>Richtig.</b>' : '<b>Richtig wäre: ' + esc(it.ans) + '</b>'; }
       else {
         var w = it.w, txt = String(a || '');
@@ -190,12 +211,14 @@
     });
     var pc = max ? tot / max : 0, note = noteOf(pc), d = new Date(), ds = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
     S.sum = { tot: tot, max: max, pc: Math.round(pc * 100), note: note };
-    (hist[S.ex.id] = hist[S.ex.id] || []).push({ d: ds, p: S.sum.pc, note: note, n: S.items.length }); hist[S.ex.id] = hist[S.ex.id].slice(-20); saveHist();
+    if (!S.practice) (hist[S.ex.id] = hist[S.ex.id] || []).push({ d: ds, p: S.sum.pc, note: note, n: S.items.length }); if (hist[S.ex.id]) hist[S.ex.id] = hist[S.ex.id].slice(-20); saveHist();
     var wrong = S.items.filter(function (_, i) { return S.res[i].p < S.res[i].max; }).length;
-    var h = '<div class="pt-res"><div class="pt-note">' + note + '</div><div><b>' + fmt(tot) + ' von ' + max + ' Punkten (' + S.sum.pc + ' %)</b><div class="pt-tip" style="margin:4px 0 0">Geschätzte Note nach einem üblichen Schlüssel: 1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %. Deine Lehrkraft kann anders bewerten.</div></div></div>';
-    h += '<div class="pt-row">' + (wrong ? '<button class="pt-btn" data-a="again">Fehler nochmal üben (' + wrong + ')</button>' : '') + '<button class="pt-btn sec" data-a="back">Neuer Test</button>' + (canAsk ? '<button class="pt-btn sec" data-a="ai">Persönliches Feedback</button>' : '') + '</div><div id="ptAi"></div>';
+    var passed = pc >= 0.8, tkMsg = '';
+    if (S.tk) { tkMsg = passed ? '<div class="pt-tip" style="margin:6px 0 0;color:#2e9b5b">Ab 80 % geschafft – die Aufgabe im Lernplan ist abgehakt.</div>' : '<div class="pt-tip" style="margin:6px 0 0">Für das Häkchen im Lernplan brauchst du 80 %. Übe die Fehler und versuch es nochmal.</div>'; if (passed) markTask(S.tk); }
+    var h = '<div class="pt-res"><div class="pt-note">' + (S.practice ? S.sum.pc + '<span style="font-size:24px"> %</span>' : note) + '</div><div><b>' + fmt(tot) + ' von ' + max + ' Punkten (' + S.sum.pc + ' %)</b>' + (S.practice ? '' : '<div class="pt-tip" style="margin:4px 0 0">Geschätzte Note nach einem üblichen Schlüssel: 1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %. Deine Lehrkraft kann anders bewerten.</div>') + tkMsg + '</div></div>';
+    h += '<div class="pt-row">' + (wrong ? '<button class="pt-btn" data-a="again">Fehler nochmal üben (' + wrong + ')</button>' : '') + '<button class="pt-btn sec" data-a="back">' + (S.practice ? 'Fertig' : 'Neuer Test') + '</button>' + (canAsk ? '<button class="pt-btn sec" data-a="ai">Persönliches Feedback</button>' : '') + '</div><div id="ptAi"></div>';
     h += '<h4>Verbesserung</h4>' + S.items.map(function (it, i) { return qHtml(it, i, true); }).join('');
-    show(frame('Ergebnis ' + S.ex.subject, h));
+    show(frame((S.practice ? 'Ergebnis: ' + S.practice : 'Ergebnis ' + S.ex.subject), h));
   }
   function fmt(x) { return String(x).replace('.', ','); }
 
@@ -243,7 +266,8 @@
     if (a === 'type') { var t = cfg.types.indexOf(b.dataset.t); if (t >= 0) { if (cfg.types.length > 1) cfg.types.splice(t, 1); } else cfg.types.push(b.dataset.t); return setup(ex.id); }
     if (a === 'n') { cfg.n = +b.dataset.n; return setup(ex.id); }
     if (a === 'start') return run(build(ex, cfg));
-    if (a === 'back') return setup(ex.id);
+    if (a === 'back') { if (S.practice) return hide(); return setup(ex.id); }
+    if (a === 'pick') return pickRun(b);
     if (a === 'again') { var keep = S.items.filter(function (_, i) { return S.res[i].p < S.res[i].max; }); return run(shuffle(keep)); }
     if (a === 'ai') return feedback(b);
     if (a === 'submit') {
@@ -258,6 +282,63 @@
   });
   ov.addEventListener('input', function (e) { var t = e.target; if (t.dataset && (t.dataset.a === 'gap' || t.dataset.a === 'wr') && S && S.ans) S.ans[+t.dataset.i] = t.value; });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !ov.hidden) hide(); });
+
+  /* ---------- Lernplan: beim Starten die Übungsform wählen ---------- */
+  var CH = null; /* {btn, ex, unit, tk, kind} */
+  function choices(ex, kind, unit) {
+    var P = pool(ex), inU = function (it) { return !unit || it.u === unit; }, out = [];
+    var cnt = function (t, f) { return P[t].filter(function (it) { return inU(it) && (!f || f(it)); }).length; };
+    if (kind === 'cards') {
+      out.push({ id: 'orig', t: 'Karteikarten', d: 'Klassisch umdrehen, mit Wiederholung' });
+      if (P.voc.length >= 3) out.push({ id: 'voc', t: 'Vokabeln tippen', d: 'Du siehst eine Seite und tippst die Bedeutung' });
+      if (cnt('mc', function (x) { return x.card; }) >= 3) out.push({ id: 'cmc', t: 'Ankreuzen', d: 'Die richtige Bedeutung aus vier auswählen' });
+      if (cnt('tf', function (x) { return x.card; }) >= 3) out.push({ id: 'ctf', t: 'Wahr / Falsch', d: 'Passt die Bedeutung?' });
+      if (out.length > 2) out.push({ id: 'cmix', t: 'Gemischt', d: 'Alles durcheinander' });
+    } else if (kind === 'learn') {
+      out.push({ id: 'orig', t: 'Lerneinheit + Test', d: 'Merksätze lesen, dann kurzer Test' });
+      if (cnt('gap', null) >= 2) out.push({ id: 'gap', t: 'Lückentext', d: 'Fehlende Begriffe ergänzen' });
+      if (cnt('tf', function (x) { return !x.card; }) >= 3) out.push({ id: 'tf', t: 'Wahr / Falsch', d: 'Stimmt die Aussage?' });
+      if (out.length > 1) out.push({ id: 'mix', t: 'Gemischt', d: 'Ankreuzen, Wahr/Falsch und Lückentext' });
+    } else if (kind === 'quiz') {
+      out.push({ id: 'orig', t: 'Quiz', d: 'Ankreuzen wie gewohnt' });
+      out.push({ id: 'all', t: 'Gemischter Test', d: 'Alle Aufgabentypen, ' + (ex.units && ex.units.length ? 'alle Bereiche' : 'alles') });
+    }
+    return out;
+  }
+  function chooser(btn) {
+    var kind = btn.hasAttribute('data-cards') ? 'cards' : btn.hasAttribute('data-learn') ? 'learn' : 'quiz';
+    var id = btn.getAttribute('data-' + kind), ex = findEx(id); if (!ex) return false;
+    var unit = btn.getAttribute('data-unit') || '', ch = choices(ex, kind, unit); if (ch.length < 2) return false;
+    CH = { btn: btn, ex: ex, unit: unit, tk: btn.getAttribute('data-tk') || '', kind: kind };
+    var u = unit && (ex.units || []).find(function (x) { return x.id === unit; });
+    var h = '<p class="pt-tip">' + esc(u ? u.title : kind === 'cards' ? 'Karteikarten' : 'Abschluss') + ' – wie willst du heute üben? Ab 80 % wird die Aufgabe abgehakt.</p><div class="pt-opts">' +
+      ch.map(function (c) { return '<button class="pt-opt" data-a="pick" data-c="' + c.id + '"><b>' + esc(c.t) + '</b><br><span class="pt-tip" style="margin:0">' + esc(c.d) + '</span></button>'; }).join('') + '</div>';
+    S = { ex: ex, cfg: null };
+    show(frame(ex.subject + ': Übungsform', h));
+    return true;
+  }
+  function pickRun(b) {
+    var c = b.dataset.c, ch = CH; if (!ch) return;
+    if (c === 'orig') { hide(); ch.btn.dataset.ptGo = '1'; ch.btn.click(); delete ch.btn.dataset.ptGo; return; }
+    var units = ch.unit ? [ch.unit] : (ch.ex.units || []).map(function (u) { return u.id; });
+    var cfg = { units: units, n: 10, types: [] }, name = '';
+    if (c === 'voc') { cfg.types = ['voc']; name = 'Vokabeln tippen'; }
+    else if (c === 'cmc') { cfg.types = ['mc']; cfg.only = function (x) { return x.card; }; name = 'Ankreuzen'; }
+    else if (c === 'ctf') { cfg.types = ['tf']; cfg.only = function (x) { return x.card; }; name = 'Wahr / Falsch'; }
+    else if (c === 'cmix') { cfg.types = ['voc', 'mc', 'tf']; cfg.only = function (x) { return x.card || x.k === 'voc'; }; name = 'Vokabeln gemischt'; }
+    else if (c === 'gap') { cfg.types = ['gap']; name = 'Lückentext'; }
+    else if (c === 'tf') { cfg.types = ['tf']; cfg.only = function (x) { return !x.card; }; name = 'Wahr / Falsch'; }
+    else if (c === 'mix') { cfg.types = ['mc', 'tf', 'gap']; cfg.only = function (x) { return !x.card; }; name = 'Gemischt'; }
+    else if (c === 'all') { cfg.types = TYPES.slice(); cfg.n = 15; name = 'Gemischter Test'; }
+    S = { ex: ch.ex, cfg: cfg, tk: ch.tk, practice: name };
+    var items = build(ch.ex, cfg); if (!items.length) return;
+    run(items);
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.task button.go[data-learn], .task button.go[data-quiz], .task button.go[data-cards]');
+    if (!b || b.dataset.ptGo || ov.contains(b)) return;
+    if (chooser(b)) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
+  }, true);
 
   /* Knopf „Probetest“ in jeder Prüfungskarte */
   function addButtons() {
