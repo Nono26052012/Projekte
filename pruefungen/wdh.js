@@ -14,6 +14,8 @@
     '#wdh .wd-btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}' +
     '#wdh .wd-btn[disabled]{opacity:.55;pointer-events:none}' +
     '#wdh .wd-st{font-size:14px;color:var(--soft)}' +
+    '.lsn .wd-go{all:unset;box-sizing:border-box;cursor:pointer;flex:none;align-self:center;font-size:14px;font-weight:600;padding:6px 12px;border-radius:10px;border:1.5px solid var(--red);color:var(--red);margin-left:8px;white-space:nowrap}' +
+    '.lsn .wd-go:active{background:var(--red);color:#fff}.lsn .wd-go[disabled]{opacity:.55;pointer-events:none}' +
     '.wd-day{font-size:11px;font-weight:600;margin-left:6px;padding:1px 7px;border-radius:99px;background:var(--red);color:#fff;vertical-align:2px}' +
     '.wd-day.mo{background:transparent;color:var(--red);border:1px solid var(--red)}' +
     '.wd-imp{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:14px}' +
@@ -38,24 +40,20 @@
   (async function () { try { if (window.claude && typeof claude.use === 'function') sample = await claude.use('sample'); } catch (e) {} paint(); })();
 
   function paint() {
-    var sec = document.querySelector('[data-sec="last"]'), list = document.getElementById('lastList'); if (!sec || !list) return;
-    var box = document.getElementById('wdh');
-    if (!box) { box = document.createElement('div'); box.id = 'wdh'; list.parentNode.insertBefore(box, list); }
-    var L = latest();
-    if (!L.list.length) { box.innerHTML = '<h2>Wiederholen</h2><p class="wd-m">Sobald Zusammenfassungen der Stunden da sind, kannst du hier den Stoff der letzten Stunde kurz testen.</p>'; return; }
-    /* Fächer zur Auswahl: alle der letzten 7 Tage, vorausgewählt: die vom letzten Tag */
-    var cutoff = new Date(L.date + 'T12:00:00'); cutoff.setDate(cutoff.getDate() - 6); var cut = cutoff.toISOString().slice(0, 10);
-    var recent = L.all.filter(function (l) { return l.date >= cut; }).sort(function (a, b) { return b.date.localeCompare(a.date); });
-    var seen = {}; recent = recent.filter(function (l) { if (seen[l.subject]) return false; seen[l.subject] = 1; return true; });
-    if (!sel) { sel = {}; L.list.forEach(function (l) { sel[l.subject] = 1; }); }
-    var picked = recent.filter(function (l) { return sel[l.subject]; });
-    box.innerHTML = '<h2>Wiederholen</h2><p class="wd-m">Kurzer Test zum Stoff der letzten Stunde – danach siehst du das Wichtigste und warum etwas falsch war.</p>' +
-      '<div class="wd-chips">' + recent.map(function (l) { return '<button class="wd-chip' + (sel[l.subject] ? ' on' : '') + '" data-wd="' + esc(l.subject) + '">' + esc(l.subject) + ' · ' + esc(niceD(l.date)) + '</button>'; }).join('') + '</div>' +
-      '<div class="wd-row"><button class="wd-btn" data-wdgo' + (picked.length && !busy ? '' : ' disabled') + '>' + (busy ? 'Fragen werden erstellt …' : 'Wiederholen starten') + '</button>' +
-      '<button class="wd-btn sec" data-wdread' + (picked.length ? '' : ' disabled') + '>Nur das Wichtigste lesen</button>' +
-      '<span class="wd-st" id="wdSt">' + (sample ? '' : 'Den Test erstellt Claude – das klappt in der Claude-App. Hier kannst du das Wichtigste lesen.') + '</span></div>';
-    if (!sample) { var g = box.querySelector('[data-wdgo]'); if (g) g.disabled = true; }
+    var old = document.getElementById('wdh'); if (old) old.remove();
+    if (!sample) return;
+    var ls = myLessons();
+    document.querySelectorAll('#lastList details.lsn > summary').forEach(function (sm) {
+      if (sm.querySelector('.wd-go')) return;
+      var b = sm.querySelector('b'), name = b && b.textContent.trim();
+      var l = ls.filter(function (x) { return x.subject === name; }).sort(function (a, c) { return c.date.localeCompare(a.date); })[0];
+      if (!l) return;
+      var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'wd-go'; btn.textContent = busyKey === l.subject + '@' + l.date ? '…' : 'Wiederholen';
+      btn.dataset.wdS = l.subject; btn.dataset.wdD = l.date;
+      sm.appendChild(btn);
+    });
   }
+  var busyKey = null;
   function picked() { var L = latest(), seen = {}; return (L.all || []).slice().sort(function (a, b) { return b.date.localeCompare(a.date); }).filter(function (l) { if (!sel || !sel[l.subject] || seen[l.subject]) return false; seen[l.subject] = 1; return true; }); }
   function importantHtml(ls) {
     return '<div class="wd-imp"><h4>Das Wichtigste</h4>' + ls.map(function (l) { return '<p style="margin:10px 0 4px"><b>' + esc(l.subject) + ': ' + esc(l.title) + '</b> <span class="wd-st">(' + esc(niceD(l.date)) + ')</span></p><ul>' + l.points.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>'; }).join('') + '</div>';
@@ -64,12 +62,12 @@
   function cacheGet(k) { try { return (JSON.parse(localStorage.getItem(CK) || '{}') || {})[k]; } catch (e) { return null; } }
   function cacheSet(k, v) { try { var c = JSON.parse(localStorage.getItem(CK) || '{}') || {}; var ks = Object.keys(c); if (ks.length > 12) delete c[ks[0]]; c[k] = v; localStorage.setItem(CK, JSON.stringify(c)); } catch (e) {} }
 
-  async function go() {
-    var ls = picked(); if (!ls.length || !sample || !window.PT) return;
+  async function go(ls) {
+    if (!ls || !ls.length || !sample || !window.PT) return;
     var key = ls.map(function (l) { return l.subject + '@' + l.date; }).join('|');
     var qs = cacheGet(key);
     if (!qs) {
-      busy = true; paint();
+      busyKey = key; setBusy(true);
       var mat = ls.map(function (l) { return '### ' + l.subject + ' – ' + l.title + ' (' + l.date + ')\n' + l.points.map(function (p) { return '- ' + p; }).join('\n'); }).join('\n\n');
       var n = Math.min(10, Math.max(5, ls.length * 4));
       var prompt = 'Erstelle einen kurzen Wiederholungstest für eine 9. Klasse (bayerisches Gymnasium) NUR aus diesem Heftstoff der letzten Stunde(n). Erfinde keinen zusätzlichen Stoff, keine Zahlen, die nicht im Text stehen.\n\n' + mat + '\n\n' +
@@ -83,11 +81,11 @@
         qs = (r && r.questions) || [];
         if (qs.length) cacheSet(key, qs);
       } catch (e) {
-        busy = false; paint(); var s = document.getElementById('wdSt');
-        if (s) s.textContent = e && e.code === 'not_granted' ? 'Claude darf hier gerade keine Fragen erstellen.' : e && e.code === 'rate_limited' ? 'Gerade zu viele Anfragen – gleich nochmal versuchen.' : 'Das hat nicht geklappt – versuch es gleich nochmal.';
+        busyKey = null; setBusy(false);
+        alertMsg(e && e.code === 'not_granted' ? 'Claude darf hier gerade keine Fragen erstellen.' : e && e.code === 'rate_limited' ? 'Gerade zu viele Anfragen – gleich nochmal versuchen.' : 'Das hat nicht geklappt – versuch es gleich nochmal.');
         return;
       }
-      busy = false; paint();
+      busyKey = null; setBusy(false);
     }
     var items = [];
     (qs || []).forEach(function (q, i) {
@@ -96,24 +94,23 @@
       else if (q.type === 'tf' && q.s) items.push({ k: 'tf', id: 'w' + i, q: '', ans: pre + q.s, a: !!q.a, right: '', why: q.why });
       else if (q.type === 'gap' && q.ans) items.push({ k: 'gap', id: 'w' + i, pre: pre + (q.pre || ''), post: q.post || '', ans: q.ans, alt: [], why: q.why });
     });
-    if (!items.length) { var s2 = document.getElementById('wdSt'); if (s2) s2.textContent = 'Keine Fragen bekommen – versuch es nochmal.'; cacheSet(key, null); return; }
+    if (!items.length) { alertMsg('Keine Fragen bekommen – versuch es nochmal.'); cacheSet(key, null); return; }
     var title = 'Wiederholen: ' + ls.map(function (l) { return l.subject; }).join(', ');
     window.PT.run(title, items, importantHtml(ls) + '<div class="pt-row"><button class="pt-btn sec" data-a="wdnew">Neue Fragen erstellen</button></div>');
-    lastKey = key;
+    lastKey = key; lastLs = ls;
   }
-  var lastKey = null;
+  var lastKey = null, lastLs = null;
+  function setBusy(on) { document.querySelectorAll('.lsn .wd-go').forEach(function (b) { var k = b.dataset.wdS + '@' + b.dataset.wdD; b.disabled = on; b.textContent = on && busyKey === k ? 'Fragen kommen …' : 'Wiederholen'; }); }
+  function alertMsg(t) { var ov = document.getElementById('pt'); if (!ov) return; ov.innerHTML = '<div class="pt-s" role="dialog" aria-modal="true"><div class="pt-top"><h2>Wiederholen</h2><button class="pt-x" data-a="close" aria-label="Schließen">×</button></div><p class="pt-tip">' + esc(t) + '</p></div>'; ov.hidden = false; document.body.style.overflow = 'hidden'; }
   document.addEventListener('click', function (e) {
-    var c = e.target.closest && e.target.closest('[data-wd]');
-    if (c) { sel[c.dataset.wd] = !sel[c.dataset.wd]; return paint(); }
-    if (e.target.closest && e.target.closest('[data-wdgo]')) return go();
-    if (e.target.closest && e.target.closest('[data-wdread]')) {
-      var ls = picked(); if (!ls.length || !window.PT) return;
-      var ov = document.getElementById('pt'); if (!ov) return;
-      ov.innerHTML = '<div class="pt-s" role="dialog" aria-modal="true"><div class="pt-top"><h2>Das Wichtigste</h2><button class="pt-x" data-a="close" aria-label="Schließen">×</button></div>' + importantHtml(ls) + '</div>';
-      ov.hidden = false; document.body.style.overflow = 'hidden'; return;
+    var g = e.target.closest && e.target.closest('.wd-go');
+    if (g) {
+      e.preventDefault(); e.stopPropagation();
+      var l = myLessons().filter(function (x) { return x.subject === g.dataset.wdS && x.date === g.dataset.wdD; });
+      return go(l);
     }
-    if (e.target.closest && e.target.closest('[data-a="wdnew"]')) { if (lastKey) cacheSet(lastKey, null); go(); }
-  });
+    if (e.target.closest && e.target.closest('[data-a="wdnew"]')) { if (lastKey) cacheSet(lastKey, null); go(lastLs); }
+  }, true);
 
   /* „heute“ / „morgen“ an den Wochentagen */
   function tagDays() {
@@ -125,6 +122,6 @@
     });
   }
   var q = 0;
-  new MutationObserver(function () { if (q) return; q = requestAnimationFrame(function () { q = 0; tagDays(); if (!document.getElementById('wdh')) paint(); }); }).observe(document.body, { childList: true, subtree: true });
+  new MutationObserver(function () { if (q) return; q = requestAnimationFrame(function () { q = 0; tagDays(); paint(); }); }).observe(document.body, { childList: true, subtree: true });
   tagDays(); paint();
 })();
