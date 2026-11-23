@@ -16,6 +16,9 @@
     '#wdh .wd-st{font-size:14px;color:var(--soft)}' +
     '.lsn .wd-go{all:unset;box-sizing:border-box;cursor:pointer;flex:none;align-self:center;font-size:14px;font-weight:600;padding:6px 12px;border-radius:10px;border:1.5px solid var(--red);color:var(--red);margin-left:8px;white-space:nowrap}' +
     '.lsn .wd-go:active{background:var(--red);color:#fff}.lsn .wd-go[disabled]{opacity:.55;pointer-events:none}' +
+    '.lsn .wd-ex{flex:none;align-self:center;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;white-space:nowrap;border:1.5px solid}' +
+    '.lsn .wd-ex.sa{color:#e5484d;border-color:#e5484d}.lsn .wd-ex.sa.now{background:#e5484d;color:#fff}' +
+    '.lsn .wd-ex.kl{color:#d98a00;border-color:#f5a524}.lsn .wd-ex.kl.now{background:#f5a524;color:#1d1d21;border-color:#f5a524}' +
     '.wd-day{font-size:11px;font-weight:600;margin-left:6px;padding:1px 7px;border-radius:99px;background:var(--red);color:#fff;vertical-align:2px}' +
     '.wd-day.mo{background:transparent;color:var(--red);border:1px solid var(--red)}' +
     '.wd-imp{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:14px}' +
@@ -41,6 +44,7 @@
 
   function paint() {
     var old = document.getElementById('wdh'); if (old) old.remove();
+    markExams();
     if (!sample) return;
     var ls = myLessons();
     document.querySelectorAll('#lastList details.lsn > summary').forEach(function (sm) {
@@ -51,9 +55,35 @@
       var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'wd-go'; btn.textContent = busyKey === l.subject + '@' + l.date ? '…' : 'Wiederholen';
       btn.dataset.wdS = l.subject; btn.dataset.wdD = l.date;
       sm.appendChild(btn);
+      var ex = sm.querySelector('.wd-ex'); if (ex) sm.insertBefore(ex, btn);
     });
   }
   var busyKey = null;
+
+  /* Signalfarben: anstehende Schulaufgabe (rot) bzw. kleiner Leistungsnachweis (gelb) */
+  function upcomingFor(name) {
+    var pr = null; try { pr = JSON.parse(localStorage.getItem('klasse-prefs') || 'null'); } catch (e) {}
+    var t0 = new Date(); t0.setHours(12, 0, 0, 0);
+    return (DATA.exams || []).filter(function (e) { return e.subject === name && (!e.group || !pr || e.group === pr.rel); })
+      .map(function (e) { var d = new Date(e.date + 'T12:00:00'); return { e: e, n: Math.round((d - t0) / 864e5) }; })
+      .filter(function (x) { return x.n >= 0 && x.n <= 21; }).sort(function (a, b) { return a.n - b.n; })[0];
+  }
+  function badge(x) {
+    var sa = /schulaufgabe/i.test(x.e.type || ''), mdl = /mdl|mündl/i.test(x.e.type || '');
+    var what = sa ? (mdl ? 'Mündl. Schulaufgabe' : 'Schulaufgabe') : /kurzarbeit/i.test(x.e.type || '') ? 'Kurzarbeit' : /stegreif|\bex\b/i.test(x.e.type || '') ? 'Ex' : /test/i.test(x.e.type || '') ? 'Test' : 'Kleiner LN';
+    var when = x.n === 0 ? 'heute' : x.n === 1 ? 'morgen' : 'in ' + x.n + ' Tagen';
+    var sp = document.createElement('span'); sp.className = 'wd-ex ' + (sa ? 'sa' : 'kl') + (x.n <= 3 ? ' now' : '');
+    sp.textContent = what + ' ' + when; sp.title = (x.e.type || '') + ' am ' + x.e.date.split('-').reverse().join('.');
+    return sp;
+  }
+  function markExams() {
+    document.querySelectorAll('#lastList details.lsn > summary').forEach(function (sm) {
+      if (sm.querySelector('.wd-ex')) return;
+      var b = sm.querySelector('b'), x = b && upcomingFor(b.textContent.trim()); if (!x) return;
+      var bd = badge(x), go = sm.querySelector('.wd-go');
+      if (go) sm.insertBefore(bd, go); else sm.appendChild(bd);
+    });
+  }
   function picked() { var L = latest(), seen = {}; return (L.all || []).slice().sort(function (a, b) { return b.date.localeCompare(a.date); }).filter(function (l) { if (!sel || !sel[l.subject] || seen[l.subject]) return false; seen[l.subject] = 1; return true; }); }
   function importantHtml(ls) {
     return '<div class="wd-imp"><h4>Das Wichtigste</h4>' + ls.map(function (l) { return '<p style="margin:10px 0 4px"><b>' + esc(l.subject) + ': ' + esc(l.title) + '</b> <span class="wd-st">(' + esc(niceD(l.date)) + ')</span></p><ul>' + l.points.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>'; }).join('') + '</div>';
