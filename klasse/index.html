@@ -688,5 +688,34 @@ new MutationObserver(function(ms){ms.forEach(function(m){if(m.type==='characterD
   .observe(document.body,{childList:true,subtree:true,characterData:true});
 })();
 </script>
+<style>
+.exam .body h3.fold{cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.exam .body h3.fold::after{content:'';width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin:0 6px 3px auto;opacity:.55;transition:transform .15s}
+.exam .body h3.fold.zu::after{transform:rotate(-45deg);margin-bottom:0}
+.exam .body h3.fold .anz{font-weight:400;font-size:.85em;opacity:.6}
+.exam .body .fold-hide{display:none!important}
+</style>
+<script>
+/* Abschnitte in den Prüfungskarten (Stoff, Lernplan, Zeichnen, Schreiben, Lerneinheiten) ein- und ausklappbar */
+(function(){
+var KEY='fold-v1',st={};try{st=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+function nm(h){return h.getAttribute('data-n');}
+function closed(n){return Object.prototype.hasOwnProperty.call(st,n)?st[n]:!(n.indexOf('Stoff')===0||n==='Lernplan');}
+function stop(el){return el.tagName==='H3'||(el.tagName==='P'&&!el.classList.contains('empty'))||(el.classList.contains('prac')&&el.querySelector('[data-quiz],[data-cards]'));}
+function members(h){var a=[],e=h.nextElementSibling;while(e&&!stop(e)){a.push(e);e=e.nextElementSibling;}return a;}
+function apply(h){var z=closed(nm(h));h.classList.toggle('zu',z);h.setAttribute('aria-expanded',String(!z));members(h).forEach(function(m){m.classList.toggle('fold-hide',z);});}
+function setup(root){(root.querySelectorAll?root:document).querySelectorAll('.exam .body h3:not(.fold)').forEach(function(h){
+  h.setAttribute('data-n',h.textContent.trim());h.classList.add('fold');h.setAttribute('role','button');h.tabIndex=0;
+  var n=members(h).reduce(function(s,m){return s+(m.classList.contains('day')?m.querySelectorAll('.task').length:m.matches('ul')?m.children.length:m.querySelectorAll('button').length);},0);
+  if(n){var sp=document.createElement('span');sp.className='anz';sp.textContent='('+n+')';h.appendChild(sp);}
+  apply(h);});}
+function toggle(h){var n=nm(h);st[n]=!closed(n);save();document.querySelectorAll('.exam .body h3.fold').forEach(function(x){if(nm(x)===n)apply(x);});}
+document.addEventListener('click',function(e){var h=e.target.closest&&e.target.closest('.exam .body h3.fold');if(h){e.preventDefault();toggle(h);}});
+document.addEventListener('keydown',function(e){var h=e.target.closest&&e.target.closest('.exam .body h3.fold');if(h&&(e.key==='Enter'||e.key===' ')){e.preventDefault();toggle(h);}});
+setup(document);
+new MutationObserver(function(ms){for(var i=0;i<ms.length;i++)if(ms[i].addedNodes.length){setup(document);break;}}).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
