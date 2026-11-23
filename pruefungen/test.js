@@ -207,7 +207,7 @@
     var h = '<p class="pt-tip">' + items.length + ' Aufgaben · ' + items.reduce(function (s, it) { return s + pts(it); }, 0) + ' Punkte. Nimm dir Zeit wie in einer echten Probe – die Lösungen kommen erst nach dem Abgeben.</p>';
     h += items.map(function (it, i) { return qHtml(it, i, false); }).join('');
     h += '<div class="pt-row"><button class="pt-btn" data-a="submit">' + (S.practice ? 'Fertig – auswerten' : 'Abgeben') + '</button><button class="pt-btn sec" data-a="back">Abbrechen</button></div>';
-    show(frame(S.practice ? S.ex.subject + ': ' + S.practice : 'Probetest ' + S.ex.subject, h));
+    show(frame(S.custom ? S.practice : S.practice ? S.ex.subject + ': ' + S.practice : 'Probetest ' + S.ex.subject, h));
   }
   function markTask(k) {
     var box = [].slice.call(document.querySelectorAll('input[data-k]')).filter(function (x) { return x.dataset.k === k; })[0];
@@ -221,7 +221,7 @@
       if (it.k === 'mc') { p = a === it.a ? 1 : 0; fb = p ? '<b>Richtig.</b>' : '<b>Richtig wäre: ' + esc(it.o[it.a]) + '</b>'; if (it.why) fb += esc(it.why); }
       else if (it.k === 'tf') { p = a === it.a ? 1 : 0; fb = '<b>' + (p ? 'Richtig – ' : 'Falsch – ') + 'die Aussage ist ' + (it.a ? 'wahr' : 'falsch') + '.</b>' + (!it.a && it.right ? 'Richtig ist: ' + esc(it.right) + '. ' : '') + esc(it.why || ''); }
       else if (it.k === 'voc') { var na = norm(a), nb = norm(String(a || '').trim().replace(/^(to|the|a|an|der|die|das|ein|eine)\s+/i, '')); p = !!na && alts(it.ans).some(function (x) { var nx = norm(x); return nx === na || nx === nb; }) ? 1 : 0; fb = p ? '<b>Richtig.</b>' + (norm(it.ans) !== na ? 'Komplett: ' + esc(it.ans) : '') : '<b>Richtig wäre: ' + esc(it.ans) + '</b>'; }
-      else if (it.k === 'gap') { var ok = [it.ans].concat(it.alt || []).some(function (x) { return norm(x) === norm(a); }); p = ok ? 1 : 0; fb = p ? '<b>Richtig.</b>' : '<b>Richtig wäre: ' + esc(it.ans) + '</b>'; }
+      else if (it.k === 'gap') { var ok = [it.ans].concat(it.alt || []).some(function (x) { return norm(x) === norm(a); }); p = ok ? 1 : 0; fb = (p ? '<b>Richtig.</b>' : '<b>Richtig wäre: ' + esc(it.ans) + '</b>') + esc(it.why || ''); }
       else {
         var w = it.w, txt = String(a || '');
         var nt = w.eq ? norm(txt) : w.code ? txt.toLowerCase().replace(/\s+/g, '') : txt.toLowerCase();
@@ -237,9 +237,9 @@
     var passed = pc >= 0.8, tkMsg = '';
     if (S.tk) { tkMsg = passed ? '<div class="pt-tip" style="margin:6px 0 0;color:#2e9b5b">Ab 80 % geschafft – die Aufgabe im Lernplan ist abgehakt.</div>' : '<div class="pt-tip" style="margin:6px 0 0">Für das Häkchen im Lernplan brauchst du 80 %. Übe die Fehler und versuch es nochmal.</div>'; if (passed) markTask(S.tk); }
     var h = '<div class="pt-res"><div class="pt-note">' + (S.practice ? S.sum.pc + '<span style="font-size:24px"> %</span>' : note) + '</div><div><b>' + fmt(tot) + ' von ' + max + ' Punkten (' + S.sum.pc + ' %)</b>' + (S.practice ? '' : '<div class="pt-tip" style="margin:4px 0 0">Geschätzte Note nach einem üblichen Schlüssel: 1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %. Deine Lehrkraft kann anders bewerten.</div>') + tkMsg + '</div></div>';
-    h += '<div class="pt-row">' + (wrong ? '<button class="pt-btn" data-a="again">Fehler nochmal üben (' + wrong + ')</button>' : '') + '<button class="pt-btn sec" data-a="back">' + (S.practice ? 'Fertig' : 'Neuer Test') + '</button>' + (canAsk ? '<button class="pt-btn sec" data-a="ai">Persönliches Feedback</button>' : '') + '</div><div id="ptAi"></div>';
+    h += '<div class="pt-row">' + (wrong ? '<button class="pt-btn" data-a="again">Fehler nochmal üben (' + wrong + ')</button>' : '') + '<button class="pt-btn sec" data-a="back">' + (S.practice ? 'Fertig' : 'Neuer Test') + '</button>' + (canAsk && !S.custom ? '<button class="pt-btn sec" data-a="ai">Persönliches Feedback</button>' : '') + '</div><div id="ptAi"></div>' + (S.after || '');
     h += '<h4>Verbesserung</h4>' + S.items.map(function (it, i) { return qHtml(it, i, true); }).join('');
-    show(frame((S.practice ? 'Ergebnis: ' + S.practice : 'Ergebnis ' + S.ex.subject), h));
+    show(frame((S.custom ? S.practice + ' – Ergebnis' : S.practice ? 'Ergebnis: ' + S.practice : 'Ergebnis ' + S.ex.subject), h));
   }
   function fmt(x) { return String(x).replace('.', ','); }
 
@@ -303,6 +303,9 @@
   });
   ov.addEventListener('input', function (e) { var t = e.target; if (t.dataset && (t.dataset.a === 'gap' || t.dataset.a === 'wr') && S && S.ans) S.ans[+t.dataset.i] = t.value; });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !ov.hidden) hide(); });
+
+  /* ---------- Schnittstelle für andere Teile der App (z. B. Wiederholen) ---------- */
+  window.PT = { run: function (title, items, afterHtml) { S = { ex: { id: 'custom', subject: title, units: [] }, cfg: null, practice: title, custom: true, after: afterHtml || '' }; run(items); }, esc: esc };
 
   /* ---------- Lernplan: beim Starten die Übungsform wählen ---------- */
   var CH = null; /* {btn, ex, unit, tk, kind} */
