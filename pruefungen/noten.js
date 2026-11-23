@@ -11,7 +11,11 @@ function defaults(){
   var tt=(DATA.timetable&&DATA.timetable.names)||{},names=[];
   Object.keys(tt).forEach(function(k){var n=tt[k];if(n&&!/übung|uebung|bigband|chor|orchester|intensiv|mod\b|wahl/i.test(n)&&names.indexOf(n)<0)names.push(n);});
   if(names.length<5)names=['Deutsch','Mathematik','Englisch','Latein','Physik','Chemie','Biologie','Informatik','Geschichte','Geographie','Wirtschaft und Recht','Ethik','Musik','Kunst','Sport'];
-  (DATA.exams||[]).forEach(function(e){if(names.indexOf(e.subject)<0&&!/relig/i.test(e.subject))names.push(e.subject);});
+  (DATA.exams||[]).forEach(function(e){if(names.indexOf(e.subject)<0)names.push(e.subject);});
+  /* Religion/Ethik: nur das eigene Fach (Klassen-Version: aus der Einrichtung) */
+  var pr=null;try{pr=JSON.parse(localStorage.getItem('klasse-prefs')||'null');}catch(e){}
+  var rel=pr&&pr.rel==='rk'?'Kath. Religionslehre':pr&&pr.rel==='ev'?'Ev. Religionslehre':'Ethik';
+  names=names.filter(function(n){return !/relig|ethik|^rel$/i.test(n);});names.push(rel);
   return {hw:2,subjects:names.map(function(n){return {n:n,haupt:saNum(n)>0,ratio:'auto',g:[]};})};
 }
 if(!D||!D.subjects)D=defaults();
@@ -58,8 +62,9 @@ function render(){
   });
   h+='<div class="nt-foot"><input id="ntNew" placeholder="Fach hinzufügen" maxlength="30"><button class="chip on" data-a="newsub">Hinzufügen</button></div>';
   h+='<div class="nt-calc">Rechnung wie in Bayern (§ 28 GSO): Fachnote = Schulaufgaben-Schnitt und Schnitt der kleinen Leistungsnachweise, bei bis zu zwei Schulaufgaben im Jahr 1:1, bei mehr als zwei 2:1. Die Lehrkraft darf im Einzelfall anders gewichten, die Werte hier sind also eine Schätzung. Der Gesamtschnitt ist keine offizielle Zeugnisnote.</div></div>';
-  var lbl=document.getElementById('ntLbl'),lv=lbl?lbl.value:'';
+  var lbl=document.getElementById('ntLbl'),lv=lbl?lbl.value:'',os=ov.querySelector('.nt-s'),sy=os?os.scrollTop:0;
   ov.innerHTML=h;var l2=document.getElementById('ntLbl');if(l2)l2.value=lv;
+  var ns=ov.querySelector('.nt-s');if(ns)ns.scrollTop=sy;
 }
 function show(){openIx=-1;render();ov.hidden=false;document.body.style.overflow='hidden';}
 function hide(){ov.hidden=true;ov.innerHTML='';document.body.style.overflow='';}
