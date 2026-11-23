@@ -33,8 +33,29 @@
     "#pt .pt-res{display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--card);border:1px solid var(--red);border-radius:16px;padding:16px 18px;margin-top:8px}" +
     "#pt .pt-note{font-size:54px;font-weight:800;line-height:1;color:var(--red)}" +
     "#pt .pt-hist{font-size:13px;color:var(--soft);margin-top:8px}" +
+    /* Aufgaben im Vollbild */
+    "#modal,#pt,#nt{align-items:stretch!important;justify-content:stretch!important;padding:0!important}" +
+    "#modal .sheet,#pt .pt-s,#nt .nt-s{box-sizing:border-box;width:100vw!important;max-width:none!important;height:100vh;height:100dvh;max-height:none!important;border-radius:0!important;" +
+    "padding:max(14px,env(safe-area-inset-top)) max(22px,env(safe-area-inset-right),calc((100vw - 1100px)/2)) calc(28px + env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left),calc((100vw - 1100px)/2))!important}" +
+    "#modal .sheet>.top,#pt .pt-top,#nt .nt-top{position:sticky;top:calc(-1 * max(14px,env(safe-area-inset-top)));z-index:3;background:var(--bg);padding:12px 0 10px;margin-top:-2px}" +
+    "#pt .pt-qt,#modal .sheet .learn li{font-size:17px}" +
     "#pt .pt-ai{white-space:pre-wrap;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:10px;font-size:15px;line-height:1.5}";
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+  /* Stiftfarbe: light-dark()-Farben versteht die Zeichenfläche nicht – passende Farbe für Hell/Dunkel wählen */
+  try {
+    var sd = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'strokeStyle');
+    if (sd && sd.set && !CanvasRenderingContext2D.prototype.__ldFix) {
+      Object.defineProperty(CanvasRenderingContext2D.prototype, 'strokeStyle', { configurable: true, get: sd.get, set: function (v) {
+        if (typeof v === 'string' && v.indexOf('light-dark(') === 0) {
+          var m = /light-dark\(\s*([^,]+?)\s*,\s*([^)]+?)\s*\)/.exec(v), t = document.documentElement.dataset.theme;
+          var dark = t === 'dark' || (t !== 'light' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+          if (m) v = dark ? m[2] : m[1];
+        }
+        sd.set.call(this, v);
+      } });
+      CanvasRenderingContext2D.prototype.__ldFix = 1;
+    }
+  } catch (e) {}
   var ov = document.createElement('div'); ov.id = 'pt'; ov.hidden = true; document.body.appendChild(ov);
 
   var DATA = {}; try { DATA = JSON.parse(document.getElementById('app-data').textContent); } catch (e) {}
