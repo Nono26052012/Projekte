@@ -666,5 +666,27 @@ function obj(v){try{var x=JSON.parse(v);return x&&typeof x==='object'&&!Array.is
 })();
 })();
 </script>
+<style>sub.f,sup.f{font-size:.72em;line-height:0;position:relative;vertical-align:baseline}sub.f{bottom:-.3em}sup.f{top:-.52em}</style>
+<script>
+/* Tief- und hochgestellte Zeichen (H₂O, Na⁺, Al³⁺) als echtes Tief-/Hochgestellt anzeigen */
+(function(){
+var SUB='₀₁₂₃₄₅₆₇₈₉₊₋',SUP='⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻',N='0123456789+−',RE=/[₀-₉₊₋⁰¹²³⁴-⁹⁺⁻]+/g,SKIP={SCRIPT:1,STYLE:1,TEXTAREA:1,INPUT:1,SUB:1,SUP:1,svg:1,SVG:1,text:1};
+function bad(n){for(var p=n.parentNode;p&&p!==document.body;p=p.parentNode){if(SKIP[p.nodeName]||p.namespaceURI==='http://www.w3.org/2000/svg'||p.isContentEditable)return true;}return false;}
+function conv(t){var o='';for(var i=0;i<t.length;i++){var a=SUB.indexOf(t[i]),b=SUP.indexOf(t[i]);o+=N[a>=0?a:b];}return o;}
+function fix(tn){var s=tn.nodeValue;RE.lastIndex=0;if(!RE.test(s)||bad(tn))return;RE.lastIndex=0;
+  var f=document.createDocumentFragment(),last=0,m;
+  while((m=RE.exec(s))){if(m.index>last)f.appendChild(document.createTextNode(s.slice(last,m.index)));
+    var ch=m[0],i=0;while(i<ch.length){var isSub=SUB.indexOf(ch[i])>=0,j=i;while(j<ch.length&&(SUB.indexOf(ch[j])>=0)===isSub)j++;
+      var el=document.createElement(isSub?'sub':'sup');el.className='f';el.textContent=conv(ch.slice(i,j));f.appendChild(el);i=j;}
+    last=m.index+ch.length;}
+  if(last<s.length)f.appendChild(document.createTextNode(s.slice(last)));
+  tn.parentNode.replaceChild(f,tn);}
+function walk(root){if(root.nodeType===3){fix(root);return;}if(root.nodeType!==1||SKIP[root.nodeName])return;
+  var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null),a=[],n;while((n=w.nextNode()))a.push(n);a.forEach(fix);}
+walk(document.body);
+new MutationObserver(function(ms){ms.forEach(function(m){if(m.type==='characterData')fix(m.target);else m.addedNodes.forEach(walk);});})
+  .observe(document.body,{childList:true,subtree:true,characterData:true});
+})();
+</script>
 </body>
 </html>
