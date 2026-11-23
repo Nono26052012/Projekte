@@ -67,7 +67,7 @@
   function norm(s) {
     s = String(s || '').toLowerCase();
     s = s.replace(/[₀-₉]/g, function (c) { return String(SUBS.indexOf(c)); }).replace(/[⁰¹²³⁴-⁹]/g, function (c) { return String(SUPS.indexOf(c)); });
-    return s.replace(/[⁺₊]/g, '+').replace(/[⁻₋−–]/g, '-').replace(/\s*(→|=>|->)\s*/g, '>').replace(/[\s.,;:!?„“"'()]/g, '');
+    return s.replace(/[⁺₊]/g, '+').replace(/[⁻₋−–]/g, '-').replace(/[\^_]/g, '').replace(/\s*(→|=>|->)\s*/g, '>').replace(/[\s.,;:!?„“"'()]/g, '');
   }
   function exams() { return (DATA.exams || []).filter(function (e) { return (e.quiz && e.quiz.length) || (e.writes && e.writes.length) || (e.gaps && e.gaps.length) || (e.tf && e.tf.length); }); }
   function findEx(id) { return (DATA.exams || []).find(function (e) { return e.id === id; }); }
@@ -330,6 +330,41 @@
   });
   ov.addEventListener('input', function (e) { var t = e.target; if (t.dataset && (t.dataset.a === 'gap' || t.dataset.a === 'wr') && S && S.ans) S.ans[+t.dataset.i] = t.value; });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !ov.hidden) hide(); });
+
+  /* ---------- Formeln mit der Tastatur: ^ für hoch, Zahl für tief, -> für Pfeil; Vorschau beim Tippen ---------- */
+  var pvCss = document.createElement('style');
+  pvCss.textContent = '.kb-tip{font-size:13px;color:var(--soft);margin:6px 0 0}.kb-tip code{background:var(--card);border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:12px}' +
+    '.kb-pv{font-size:18px;margin:8px 0 0;min-height:1.4em}.kb-pv:empty{display:none}.kb-pv sub,.kb-pv sup{font-size:.72em;line-height:0;position:relative;vertical-align:baseline}.kb-pv sub{bottom:-.3em}.kb-pv sup{top:-.52em}';
+  document.head.appendChild(pvCss);
+  function pretty(t) {
+    var h = esc(t);
+    h = h.replace(/\s*(-&gt;|=&gt;)\s*/g, ' → ').replace(/\*/g, '·');
+    h = h.replace(/\^\(([^)]*)\)/g, '<sup>$1</sup>').replace(/\^([0-9]*[+\-−]?)/g, function (m, g) { return g ? '<sup>' + g.replace('-', '−') + '</sup>' : m; });
+    h = h.replace(/_([0-9]+)/g, '<sub>$1</sub>');
+    h = h.replace(/([A-Za-z\)\]])([0-9]+)(?![^<]*<\/sup>)/g, '$1<sub>$2</sub>');
+    h = h.replace(/([A-Za-z\]](?:<sub>[0-9]+<\/sub>)?)([+\-])(?=\s|$|\))/g, function (m, a, c) { return a + '<sup>' + (c === '-' ? '−' : '+') + '</sup>'; });
+    return h;
+  }
+  function looksLikeFormula(t) { return /\^|->|=>|[A-Za-z\)][0-9]|[A-Z][a-z]?[+\-](\s|$)/.test(t); }
+  function attachPreview(el, ctxText) {
+    if (el.dataset.kb) return; el.dataset.kb = '1';
+    var formulaTask = /gleichung|formel|reaktion|ion|ladung|[0-9]|→|⁺|⁻|²|³|₂|₃|\^/i.test(ctxText || '');
+    var tip = document.createElement('div'); tip.className = 'kb-tip';
+    tip.innerHTML = 'Formeln mit der Tastatur: hoch mit <code>^</code> (z. B. <code>x^2</code>, <code>Al^3+</code>), tief einfach die Zahl (<code>H2O</code>), Pfeil <code>-&gt;</code>';
+    var pv = document.createElement('div'); pv.className = 'kb-pv';
+    el.parentNode.insertBefore(pv, el.nextSibling); el.parentNode.insertBefore(tip, pv.nextSibling);
+    tip.hidden = !formulaTask;
+    var upd = function () { var v = el.value || ''; pv.innerHTML = looksLikeFormula(v) ? 'So sieht es aus: ' + pretty(v) : ''; if (looksLikeFormula(v)) tip.hidden = false; };
+    el.addEventListener('input', upd); upd();
+  }
+  function scanInputs() {
+    var a = document.querySelector('#modal textarea#ans:not(.code)');
+    if (a) { var sh = a.closest('.sheet'), tip = sh && sh.querySelector('.tip'); attachPreview(a, tip ? tip.textContent : ''); }
+    document.querySelectorAll('#pt textarea[data-a="wr"], #pt input.pt-gap').forEach(function (el) {
+      if (el.disabled) return; var q = el.closest('.pt-q'); attachPreview(el, q ? q.textContent : '');
+    });
+  }
+  var kbq = 0; new MutationObserver(function () { if (kbq) return; kbq = requestAnimationFrame(function () { kbq = 0; scanInputs(); }); }).observe(document.body, { childList: true, subtree: true });
 
   /* ---------- Schnittstelle für andere Teile der App (z. B. Wiederholen) ---------- */
   window.PT = { sizes: sizes, run: function (title, items, afterHtml) { S = { ex: { id: 'custom', subject: title, units: [] }, cfg: null, practice: title, custom: true, after: afterHtml || '' }; run(items); }, esc: esc };
