@@ -69,13 +69,14 @@
     if (!qs) {
       busyKey = key; setBusy(true);
       var mat = ls.map(function (l) { return '### ' + l.subject + ' – ' + l.title + ' (' + l.date + ')\n' + l.points.map(function (p) { return '- ' + p; }).join('\n'); }).join('\n\n');
-      var n = Math.min(10, Math.max(5, ls.length * 4));
+      var n = Math.min(12, ls.reduce(function (a, l) { return a + (window.PT && window.PT.sizes ? window.PT.sizes(l.subject).wdh : 5); }, 0));
+      var gr = ls.map(function (l) { var z = window.PT && window.PT.sizes ? window.PT.sizes(l.subject) : null; return z && z.g != null ? l.subject + ': Schnitt ' + z.g.toFixed(1).replace('.', ',') : ''; }).filter(Boolean).join('; ');
       var prompt = 'Erstelle einen kurzen Wiederholungstest für eine 9. Klasse (bayerisches Gymnasium) NUR aus diesem Heftstoff der letzten Stunde(n). Erfinde keinen zusätzlichen Stoff, keine Zahlen, die nicht im Text stehen.\n\n' + mat + '\n\n' +
         'Gib genau ' + n + ' Aufgaben als JSON zurück, gemischt aus drei Typen, verteilt über alle Fächer:\n' +
         '{"questions":[{"type":"mc","subject":"Fach","q":"Frage","o":["A","B","C","D"],"a":0,"why":"kurze Erklärung, warum das richtig ist"},' +
         '{"type":"tf","subject":"Fach","s":"Aussage","a":true,"why":"kurze Erklärung (bei falsch: was stimmt)"},' +
         '{"type":"gap","subject":"Fach","pre":"Satzanfang ","ans":"fehlendes Wort (1–3 Wörter)","post":" Satzende.","why":"kurze Erklärung"}]}\n' +
-        'Regeln: Deutsch (bei Englisch dürfen Fragen auf Englisch sein). Genau 4 Antworten bei mc, plausible falsche Antworten. Bei gap muss die Lücke eindeutig sein. Ungefähr gleich viele wahre und falsche Aussagen. Nur das JSON.';
+        (gr ? 'Bisherige Noten: ' + gr + '. Bei schwächerem Schnitt (ab 3) mehr Grundlagen- und Verständnisfragen mit einfacher Sprache, bei gutem Schnitt (bis 2) auch anspruchsvollere Fragen, die Zusammenhänge prüfen. ' : '') + 'Regeln: Deutsch (bei Englisch dürfen Fragen auf Englisch sein). Genau 4 Antworten bei mc, plausible falsche Antworten. Bei gap muss die Lücke eindeutig sein. Ungefähr gleich viele wahre und falsche Aussagen. Nur das JSON.';
       try {
         var r = sample.json ? await sample.json(prompt, { modelTier: 'default' }) : JSON.parse((await sample(prompt, { modelTier: 'default' })).text);
         qs = (r && r.questions) || [];

@@ -127,6 +127,24 @@
     return { mc: mc, tf: tf, gap: gap, wr: wr, voc: voc };
   }
   function alts(x) { var a = String(x || '').split(/\s*[,;/]\s*|\s+oder\s+/i).filter(Boolean); a.push(String(x || '')); return a.concat(a.map(function (v) { return v.replace(/^(to|the|a|an|der|die|das|ein|eine)\s+/i, ''); })); }
+  /* ---------- Anpassung an Note und Fehler ---------- */
+  var SK = 'pt-stats', stats = {}; try { stats = JSON.parse(localStorage.getItem(SK) || '{}') || {}; } catch (e) {}
+  function saveStats() { try { var ks = Object.keys(stats); if (ks.length > 1500) ks.sort(function (a, b) { return (stats[a].t || 0) - (stats[b].t || 0); }).slice(0, ks.length - 1500).forEach(function (k) { delete stats[k]; }); localStorage.setItem(SK, JSON.stringify(stats)); } catch (e) {} }
+  function skey(exId, it) { return exId + '|' + (it.src != null ? 's' + it.src : it.id); }
+  function gradeOf(subject) {
+    var D = null; try { D = JSON.parse(localStorage.getItem('noten-v1') || 'null'); } catch (e) {}
+    var sub = D && (D.subjects || []).find(function (x) { return x.n === subject; }); if (!sub || !sub.g || !sub.g.length) return null;
+    var mean = function (a) { var s = 0, w = 0; a.forEach(function (g) { s += g.v * (g.w || 1); w += (g.w || 1); }); return w ? s / w : null; };
+    var G = mean(sub.g.filter(function (g) { return g.t === 'gross'; })), K = mean(sub.g.filter(function (g) { return g.t === 'klein'; }));
+    var sa = (DATA.exams || []).filter(function (e) { return e.subject === subject && /schulaufgabe/i.test(e.type || ''); }).length;
+    var r = sub.ratio === 'auto' || !sub.ratio ? (sa > 2 ? 2 : 1) : (sub.ratio === '2:1' ? 2 : 1);
+    return G != null && K != null ? (r * G + K) / (r + 1) : (G != null ? G : K);
+  }
+  /* Stufe: 0 = sicher (bis 2,0), 1 = mittel (bis 3,0), 2 = Förderbedarf (ab 3,0), null = keine Note */
+  function level(subject) { var g = gradeOf(subject); return { g: g, lv: g == null ? null : g <= 2.0 ? 0 : g <= 3.0 ? 1 : 2 }; }
+  function sizes(subject) { var L = level(subject); return { g: L.g, lv: L.lv, test: L.lv == null ? 15 : [10, 15, 25][L.lv], practice: L.lv == null ? 10 : [6, 10, 14][L.lv], wdh: L.lv == null ? 5 : [4, 5, 7][L.lv] }; }
+  function weight(exId, it) { var st = stats[skey(exId, it)]; if (!st) return 1; return Math.max(0.15, 1 + st.w * 1.5 - st.r * 0.6); }
+  function gtxt(g) { return g == null ? '' : g.toFixed(2).replace('.', ','); }
   function pts(it) { return it.k === 'wr' ? Math.min(3, it.w.keys.length) : 1; }
 
   function build(ex, cfg, only) {
@@ -134,7 +152,8 @@
     function inUnits(it) { return it.k === 'wr' ? (it.u ? cfg.units.indexOf(it.u) >= 0 : allUnits) : (!it.u || !(ex.units && ex.units.length) || cfg.units.indexOf(it.u) >= 0); }
     var pools = {};
     ['mc', 'tf', 'gap', 'wr', 'voc'].forEach(function (t) {
-      pools[t] = shuffle(P[t].filter(function (it) { return cfg.types.indexOf(t) >= 0 && inUnits(it) && (!cfg.only || cfg.only(it)) && (!only || only.indexOf(it.k + ':' + it.id) >= 0); }));
+      pools[t] = P[t].filter(function (it) { return cfg.types.indexOf(t) >= 0 && inUnits(it) && (!cfg.only || cfg.only(it)) && (!only || only.indexOf(it.k + ':' + it.id) >= 0); })
+        .map(function (it) { return { it: it, s: Math.random() * weight(ex.id, it) }; }).sort(function (a, b) { return b.s - a.s; }).map(function (x) { return x.it; });
     });
     var out = [], usedSrc = {}, order = shuffle(cfg.types.slice()), n = only ? 1e9 : cfg.n, guard = 0, maxWr = only ? 1e9 : Math.max(1, Math.round(n * 0.2));
     while (out.length < n && guard++ < 1000) {
@@ -153,6 +172,12 @@
   var TYPES = ['mc', 'tf', 'gap', 'voc', 'wr'], tn = { mc: 'Ankreuzen', tf: 'Wahr / Falsch', gap: 'Lückentext', voc: 'Vokabeln tippen', wr: 'Tippen' };
   function noteOf(p) { return p >= 0.85 ? 1 : p >= 0.70 ? 2 : p >= 0.55 ? 3 : p >= 0.40 ? 4 : p >= 0.20 ? 5 : 6; }
 
+  function adaptTip(subject, kind) {
+    var SZ = sizes(subject), n = kind === 'test' ? SZ.test : SZ.practice;
+    var base = SZ.lv == null ? 'Trag in „Noten“ deine Noten ein, dann passt sich die Länge an. ' : 'Angepasst an deinen Schnitt ' + gtxt(SZ.g) + ' in ' + subject + ': ' + n + ' Aufgaben' + (kind === 'test' ? ' vorgeschlagen' : '') + '. ';
+    return '<p class="pt-tip" style="margin-top:-4px">' + esc(base) + 'Aufgaben, die du schon falsch hattest, kommen öfter dran.</p>';
+  }
+
   /* ---------- Ansichten ---------- */
   var S = null; /* {ex, cfg, items, ans, done, res} */
   var keepScroll = function (fn) { var s = ov.querySelector('.pt-s'), y = s ? s.scrollTop : 0; fn(); var n = ov.querySelector('.pt-s'); if (n) n.scrollTop = y; };
@@ -163,10 +188,11 @@
   function setup(exId) {
     var ex = findEx(exId); if (!ex) return;
     var P = pool(ex), units = ex.units || [];
-    var cfg = S && S.ex === ex && S.cfg && !S.cfg.only ? S.cfg : { units: units.map(function (u) { return u.id; }), n: 15, types: TYPES.filter(function (t) { return P[t].length; }) };
+    var SZ = sizes(ex.subject);
+    var cfg = S && S.ex === ex && S.cfg && !S.cfg.only ? S.cfg : { units: units.map(function (u) { return u.id; }), n: SZ.test, types: TYPES.filter(function (t) { return P[t].length; }) };
     S = { ex: ex, cfg: cfg };
 
-    var h = '<p class="pt-tip">Wie eine Probe: gemischte Aufgaben aus den Bereichen, die du auswählst. Danach bekommst du Punkte, eine geschätzte Note und die Verbesserung.</p>';
+    var h = '<p class="pt-tip">Wie eine Probe: gemischte Aufgaben aus den Bereichen, die du auswählst. Danach bekommst du Punkte, eine geschätzte Note und die Verbesserung.</p>' + adaptTip(ex.subject, 'test');
     if (units.length) h += '<h4>Bereiche</h4><div class="pt-chips">' + units.map(function (u) { return '<button class="chip' + (cfg.units.indexOf(u.id) >= 0 ? ' on' : '') + '" data-a="unit" data-u="' + esc(u.id) + '">' + esc(u.title) + '</button>'; }).join('') +
       '<button class="chip" data-a="allu">' + (cfg.units.length === units.length ? 'Keine' : 'Alle') + '</button></div>';
     h += '<h4>Aufgabentypen</h4><div class="pt-chips">' + TYPES.filter(function (t) { return P[t].length; }).map(function (t) { return '<button class="chip' + (cfg.types.indexOf(t) >= 0 ? ' on' : '') + '" data-a="type" data-t="' + t + '">' + tn[t] + '</button>'; }).join('') + '</div>';
@@ -230,6 +256,7 @@
       }
       tot += p; max += m; return { p: p, max: m, fb: fb };
     });
+    if (S.ex && S.ex.id !== 'custom') { var now = Date.now(); S.items.forEach(function (it, i) { var k = skey(S.ex.id, it), st = stats[k] || { r: 0, w: 0 }; if (S.res[i].p >= S.res[i].max) st.r++; else st.w++; st.t = now; stats[k] = st; }); saveStats(); }
     var pc = max ? tot / max : 0, note = noteOf(pc), d = new Date(), ds = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
     S.sum = { tot: tot, max: max, pc: Math.round(pc * 100), note: note };
     if (!S.practice) (hist[S.ex.id] = hist[S.ex.id] || []).push({ d: ds, p: S.sum.pc, note: note, n: S.items.length }); if (hist[S.ex.id]) hist[S.ex.id] = hist[S.ex.id].slice(-20); saveHist();
@@ -260,7 +287,7 @@
       return (i + 1) + '. [' + (u ? u.title : 'allgemein') + '] ' + t + ' | Punkte ' + r.p + '/' + r.max;
     }).join('\n');
     var prompt = 'Du bist eine freundliche, ehrliche Lernhilfe für eine Schülerin oder einen Schüler der 9. Klasse am bayerischen Gymnasium. ' +
-      'Fach: ' + ex.subject + ' (' + (ex.type || '') + ' am ' + ex.date + '). Ergebnis des Probetests: ' + fmt(S.sum.tot) + ' von ' + S.sum.max + ' Punkten, ' + S.sum.pc + ' %, geschätzte Note ' + S.sum.note + '.\n\n' +
+      'Fach: ' + ex.subject + ' (' + (ex.type || '') + ' am ' + ex.date + ').' + (gradeOf(ex.subject) != null ? ' Bisheriger Notenschnitt in dem Fach: ' + gtxt(gradeOf(ex.subject)) + ' – passe Ton und Tiefe daran an (bei schwächerem Schnitt Grundlagen einfacher erklären, bei gutem Schnitt auf Feinheiten achten).' : '') + ' Ergebnis des Probetests: ' + fmt(S.sum.tot) + ' von ' + S.sum.max + ' Punkten, ' + S.sum.pc + ' %, geschätzte Note ' + S.sum.note + '.\n\n' +
       'Aufgaben mit Antworten:\n' + lines + '\n\n' +
       'Schreib ein kurzes, persönliches Feedback auf Deutsch (du-Form, höchstens 180 Wörter, keine Überschriften mit #, keine Tabellen):\n' +
       '1) Was schon gut sitzt (konkret, 1–2 Sätze).\n2) Die 2–3 wichtigsten Lücken: Was genau wurde verwechselt oder fehlt? Erkläre jeweils den richtigen Zusammenhang in einem Satz.\n' +
@@ -305,7 +332,7 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !ov.hidden) hide(); });
 
   /* ---------- Schnittstelle für andere Teile der App (z. B. Wiederholen) ---------- */
-  window.PT = { run: function (title, items, afterHtml) { S = { ex: { id: 'custom', subject: title, units: [] }, cfg: null, practice: title, custom: true, after: afterHtml || '' }; run(items); }, esc: esc };
+  window.PT = { sizes: sizes, run: function (title, items, afterHtml) { S = { ex: { id: 'custom', subject: title, units: [] }, cfg: null, practice: title, custom: true, after: afterHtml || '' }; run(items); }, esc: esc };
 
   /* ---------- Lernplan: beim Starten die Übungsform wählen ---------- */
   var CH = null; /* {btn, ex, unit, tk, kind} */
@@ -335,7 +362,7 @@
     var unit = btn.getAttribute('data-unit') || '', ch = choices(ex, kind, unit); if (ch.length < 2) return false;
     CH = { btn: btn, ex: ex, unit: unit, tk: btn.getAttribute('data-tk') || '', kind: kind };
     var u = unit && (ex.units || []).find(function (x) { return x.id === unit; });
-    var h = '<p class="pt-tip">' + esc(u ? u.title : kind === 'cards' ? 'Karteikarten' : 'Abschluss') + ' – wie willst du heute üben? Ab 80 % wird die Aufgabe abgehakt.</p><div class="pt-opts">' +
+    var h = '<p class="pt-tip">' + esc(u ? u.title : kind === 'cards' ? 'Karteikarten' : 'Abschluss') + ' – wie willst du heute üben? Ab 80 % wird die Aufgabe abgehakt.</p>' + adaptTip(ex.subject, 'practice') + '<div class="pt-opts">' +
       ch.map(function (c) { return '<button class="pt-opt" data-a="pick" data-c="' + c.id + '"><b>' + esc(c.t) + '</b><br><span class="pt-tip" style="margin:0">' + esc(c.d) + '</span></button>'; }).join('') + '</div>';
     S = { ex: ex, cfg: null };
     show(frame(ex.subject + ': Übungsform', h));
@@ -345,7 +372,7 @@
     var c = b.dataset.c, ch = CH; if (!ch) return;
     if (c === 'orig') { hide(); ch.btn.dataset.ptGo = '1'; ch.btn.click(); delete ch.btn.dataset.ptGo; return; }
     var units = ch.unit ? [ch.unit] : (ch.ex.units || []).map(function (u) { return u.id; });
-    var cfg = { units: units, n: 10, types: [] }, name = '';
+    var cfg = { units: units, n: sizes(ch.ex.subject).practice, types: [] }, name = '';
     if (c === 'voc') { cfg.types = ['voc']; name = 'Vokabeln tippen'; }
     else if (c === 'cmc') { cfg.types = ['mc']; cfg.only = function (x) { return x.card; }; name = 'Ankreuzen'; }
     else if (c === 'ctf') { cfg.types = ['tf']; cfg.only = function (x) { return x.card; }; name = 'Wahr / Falsch'; }
@@ -353,7 +380,7 @@
     else if (c === 'gap') { cfg.types = ['gap']; name = 'Lückentext'; }
     else if (c === 'tf') { cfg.types = ['tf']; cfg.only = function (x) { return !x.card; }; name = 'Wahr / Falsch'; }
     else if (c === 'mix') { cfg.types = ['mc', 'tf', 'gap']; cfg.only = function (x) { return !x.card; }; name = 'Gemischt'; }
-    else if (c === 'all') { cfg.types = TYPES.slice(); cfg.n = 15; name = 'Gemischter Test'; }
+    else if (c === 'all') { cfg.types = TYPES.slice(); cfg.n = sizes(ch.ex.subject).test; name = 'Gemischter Test'; }
     S = { ex: ch.ex, cfg: cfg, tk: ch.tk, practice: name };
     var items = build(ch.ex, cfg); if (!items.length) return;
     run(items);
