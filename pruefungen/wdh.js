@@ -274,3 +274,31 @@
   new MutationObserver(function () { if (q) return; q = requestAnimationFrame(function () { q = 0; tagDays(); paint(); renderEx(); }); }).observe(document.body, { childList: true, subtree: true });
   tagDays(); paint(); renderEx();
 })();
+
+/* Kein Springen: Was man antippt, bleibt an seiner Stelle auf dem Bildschirm */
+(function () {
+  var job = null;
+  function inOverlay(el) { return !!el.closest('#modal, #pt, #nt, dialog, .mainnav, .tabs'); }
+  function cancel() { job = null; }
+  ['wheel', 'touchmove', 'keydown'].forEach(function (t) { window.addEventListener(t, function (e) { if (t !== 'keydown' || /^(Arrow|Page|Home|End| )/.test(e.key)) cancel(); }, { passive: true, capture: true }); });
+  function start(el) {
+    if (!el || !el.getBoundingClientRect || inOverlay(el)) return;
+    var r = el.getBoundingClientRect(); if (!r.height) return;
+    var me = job = { el: el, top: r.top, y: window.scrollY, t0: Date.now() };
+    function step() {
+      if (job !== me) return;
+      if (!me.el.isConnected || document.body.style.overflow === 'hidden') return cancel();
+      if (Math.abs(window.scrollY - me.y) > 1) return cancel();       // jemand hat absichtlich gescrollt
+      var nr = me.el.getBoundingClientRect(); if (!nr.height) return cancel();
+      var d = nr.top - me.top;
+      if (Math.abs(d) > 1) { window.scrollBy(0, d); me.y = window.scrollY; }
+      if (Date.now() - me.t0 < 700) requestAnimationFrame(step); else cancel();
+    }
+    requestAnimationFrame(step);
+  }
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest && e.target.closest('summary, h3.fold, .exam>button, .task, button, label, [role=button]');
+    start(el);
+  }, true);
+  document.addEventListener('change', function (e) { var t = e.target; start(t.closest && (t.closest('.task') || t)); }, true);
+})();
