@@ -105,6 +105,36 @@
         }
       });
     });
+    /* Weitere Lücken: Fachbegriffe, Definitionen und Werte aus den Merksätzen */
+    if (!/englisch/i.test(ex.subject || '')) (ex.units || []).forEach(function (u) {
+      var qs = (ex.quiz || []).filter(function (q) { return q.u === u.id; });
+      var texts = (u.learn || []).map(function (s, li) { return { s: s, key: u.id + '|' + li, id: 'k' + u.id + '-' + li }; })
+        .concat(qs.map(function (q, qi) { return { s: q.why || '', key: 'w' + u.id + '|' + qi, id: 'kw' + u.id + '-' + qi }; }));
+      var all = (u.title || '') + ' ' + texts.map(function (t) { return t.s; }).join(' ') + ' ' + qs.map(function (q) { return q.q + ' ' + (q.o || []).join(' '); }).join(' ');
+      var used = {}; gap.forEach(function (g) { if (g.u === u.id) used[norm(g.ans)] = 1; });
+      var STOP = /^(Allgemein|Faustregel|Rechenweg|Tipp|Merksatz|Regel|Vorgehen|Schritt|Beispiel|Beispiele|Achtung|Wichtig|Merke|Hinweis|Versuch|Messung|Umrechnen|Rechnung|Ergebnis|Lösung|Aufgabe|Formel|Immer|Dabei|Deshalb|Daher|Außerdem|Insgesamt|Zuerst|Danach|Jeder|Jede|Jedes|Beim|Wenn|Weil|Dort|Hier|Diese|Dieser|Dieses|Damit|Davon|Doppelte|Halbe|Drei|Zwei|Vier|Mit|Ohne|Sie|Man|Vor|Nach)$/;
+      function count(w) { var n = 0, i = -1, l = all.toLowerCase(), x = w.toLowerCase(); while ((i = l.indexOf(x, i + 1)) >= 0) n++; return n; }
+      texts.forEach(function (t) {
+        var s = t.s; if (!s || s.length < 25 || usedGap[t.key]) return;
+        var c = [], m;
+        m = /^([A-ZÄÖÜ][A-Za-zÄÖÜäöüß\-]+(?: [A-Za-zÄÖÜäöüß\-]+){0,2}):\s+\S/.exec(s);
+        if (m && !STOP.test(m[1]) && m[1].length <= 32) c.push({ i: 0, a: m[1], sc: 6 });
+        var re = /\(([a-zäöü][a-zäöüß\-]+(?: [a-zäöüßA-ZÄÖÜ\-]+){0,2})\)/g;
+        while ((m = re.exec(s))) if (!/^z\. ?B|^ca|^vgl/.test(m[1])) c.push({ i: m.index + 1, a: m[1], sc: 4 });
+        re = /(^|[\s(=≈~→])(\d{1,3}(?: \d{3})*(?:,\d+)?\s?(?:%|(?:k|M|m|c|µ)?(?:J|N|W|Pa|V|A|g|m|s|h|°C)(?:\/s²|\/s|\/h|²|³)?|km\/h|m\/s²?|Mrd\. Jahre|Jahre))(?![A-Za-zäöüß/0-9])/g;
+        while ((m = re.exec(s))) c.push({ i: m.index + m[1].length, a: m[2], sc: 3 });
+        re = /[A-ZÄÖÜ][a-zäöüß]{3,}(?:-[A-ZÄÖÜa-zäöüß0-9]+)*/g;
+        while ((m = re.exec(s))) {
+          var w = m[0], at = m.index, pre = s.slice(0, at);
+          if (STOP.test(w) || /^\s*$/.test(pre) || /[.:!?]\s*$/.test(pre)) continue;
+          c.push({ i: at, a: w, sc: 1 + Math.min(4, count(w) - 1) + ((u.title || '').toLowerCase().indexOf(w.toLowerCase()) >= 0 ? 2 : 0) + (w.length >= 9 ? 1 : 0) });
+        }
+        c = c.filter(function (x) { return !used[norm(x.a)]; }).sort(function (a, b) { return b.sc - a.sc; });
+        if (!c.length || c[0].sc < 2) return;
+        var b = c[0]; used[norm(b.a)] = 1; usedGap[t.key] = 1;
+        gap.push({ k: 'gap', id: t.id, u: u.id, pre: s.slice(0, b.i), post: s.slice(b.i + b.a.length), ans: b.a });
+      });
+    });
     /* ausdrücklich eingetragene Aufgaben (falls vorhanden) */
     (ex.tf || []).forEach(function (t, i) { tf.push({ k: 'tf', id: 'T' + i, u: t.u, q: '', ans: t.s, a: !!t.a, right: '', why: t.why }); });
     (ex.gaps || []).forEach(function (g, i) {
@@ -382,7 +412,7 @@
       if (out.length > 2) out.push({ id: 'cmix', t: 'Gemischt', d: 'Alles durcheinander' });
     } else if (kind === 'learn') {
       out.push({ id: 'orig', t: 'Lerneinheit + Test', d: 'Merksätze lesen, dann kurzer Test' });
-      if (cnt('gap', null) >= 2) out.push({ id: 'gap', t: 'Lückentext', d: 'Fehlende Begriffe ergänzen' });
+      if (new Set(P.gap.filter(inU).map(function (x) { return norm(x.ans); })).size >= 3) out.push({ id: 'gap', t: 'Lückentext', d: 'Fehlende Begriffe ergänzen' });
       if (cnt('tf', function (x) { return !x.card; }) >= 3) out.push({ id: 'tf', t: 'Wahr / Falsch', d: 'Stimmt die Aussage?' });
       if (out.length > 1) out.push({ id: 'mix', t: 'Gemischt', d: 'Ankreuzen, Wahr/Falsch und Lückentext' });
     } else if (kind === 'quiz') {
