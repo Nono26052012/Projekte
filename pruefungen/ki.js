@@ -7,7 +7,9 @@
   function subjects() {
     var s = {}; (DATA.exams || []).forEach(function (e) { if (e.subject) s[e.subject] = 1; }); (DATA.lessons || []).forEach(function (l) { if (l.subject) s[l.subject] = 1; });
     (DATA.practice || []).forEach(function (p) { if (p.subject) s[p.subject] = 1; });
-    return Object.keys(s).sort(function (a, b) { return a.localeCompare(b, 'de'); });
+    var pr = null; try { pr = JSON.parse(localStorage.getItem('klasse-prefs') || 'null'); } catch (e) {}
+    var mine = pr && { eth: 'Ethik', rk: 'Kath. Religionslehre', ev: 'Evang. Religionslehre' }[pr.rel];
+    return Object.keys(s).filter(function (x) { return !mine || !/^(Ethik|Kath\. Religionslehre|Evang\. Religionslehre)$/.test(x) || x === mine; }).sort(function (a, b) { return a.localeCompare(b, 'de'); });
   }
   function hasStuff(sub) { return (DATA.exams || []).some(function (e) { return e.subject === sub && ((e.units && e.units.length) || (e.quiz && e.quiz.length) || (e.topics && e.topics.length) || (e.cards && e.cards.length)); }) || (DATA.lessons || []).some(function (l) { return l.subject === sub; }) || (DATA.practice || []).some(function (p) { return p.subject === sub; }); }
   function today() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -45,7 +47,8 @@
   css.textContent =
     '.ki-btn{all:unset;cursor:pointer;font:600 13px/1 system-ui,sans-serif;padding:7px 11px;border:1.5px solid var(--red,#d9480f);color:var(--red,#d9480f);border-radius:999px;white-space:nowrap}' +
     '.top .ki-btn,.pt-top .ki-btn{margin-left:auto}.top .ki-btn+.pse-btn,.pt-top .ki-btn+.pse-btn{margin-left:0}' +
-    '.ki-btn:hover{background:var(--red,#d9480f);color:#fff}.prac .ki-btn{margin-left:8px;padding:10px 14px}' +
+    '.ki-top{box-sizing:border-box;height:44px;padding:0 14px;display:grid;place-content:center;border-radius:12px;border:1px solid var(--line,#ddd);background:var(--card,#fff);color:var(--ink,#111);font:600 14px/1 system-ui,sans-serif}.ki-top:hover{background:var(--card,#fff);color:var(--red,#d9480f);border-color:var(--red,#d9480f)}' +
+    '.ki-btn:not(.ki-top):hover{background:var(--red,#d9480f);color:#fff}.prac .ki-btn{margin-left:8px;padding:10px 14px}' +
     '#ki{position:fixed;inset:0;z-index:78;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}#ki[hidden]{display:none}' +
     '#ki .ks{background:var(--bg,#fff);color:var(--ink,#111);width:100%;max-width:760px;height:92vh;display:flex;flex-direction:column;border-radius:20px 20px 0 0;overflow:hidden}' +
     '@media (min-width:1000px){#ki{align-items:center}#ki .ks{max-width:min(1000px,88vw);height:88vh;border-radius:20px}}' +
@@ -81,7 +84,7 @@
     var m = ov.querySelector('.km'); m.scrollTop = m.scrollHeight;
   }
   function open(sub, taskText) {
-    cur = sub && hasStuff(sub) ? sub : (cur || subjects().filter(hasStuff)[0]); task = (taskText || '').slice(0, 3000);
+    cur = sub && hasStuff(sub) && subjects().indexOf(sub) >= 0 ? sub : (cur || subjects().filter(hasStuff)[0]); task = (taskText || '').slice(0, 3000);
     prevOverflow = document.body.style.overflow; render(); ov.hidden = false; document.body.style.overflow = 'hidden';
     setTimeout(function () { var t = ov.querySelector('textarea'); if (t && window.innerWidth > 700) t.focus(); }, 50);
   }
@@ -143,6 +146,9 @@
   function mk(sub) { var b = document.createElement('button'); b.type = 'button'; b.className = 'ki-btn'; b.textContent = 'Frag die KI'; if (sub) b.dataset.sub = sub; return b; }
   function paintBtns() {
     if (!ready || !sample) return;
+    var gear = document.getElementById('gear');
+    if (gear && !document.getElementById('kiOpen')) { var tb = mk(null); tb.id = 'kiOpen'; tb.className = 'ki-btn ki-top'; var nb = document.getElementById('ntOpen'); gear.parentNode.insertBefore(tb, nb && nb.parentNode === gear.parentNode ? nb : gear); }
+    else if (gear) { var t0 = document.getElementById('kiOpen'), n0 = document.getElementById('ntOpen'); if (n0 && t0.nextSibling !== n0 && n0.parentNode === t0.parentNode) n0.parentNode.insertBefore(t0, n0); }
     [['#modal .sheet', '.top', '.x'], ['#pt .pt-s', '.pt-top', '.pt-x']].forEach(function (d) {
       var sheet = document.querySelector(d[0]); if (!sheet) return; var top = sheet.querySelector(d[1]); if (!top || top.querySelector('.ki-btn')) return;
       if (/Einstellungen|Noten/.test(top.textContent || '')) return;
