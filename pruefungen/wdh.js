@@ -302,3 +302,70 @@
   }, true);
   document.addEventListener('change', function (e) { var t = e.target; start(t.closest && (t.closest('.task') || t)); }, true);
 })();
+
+/* Letzte Stunde: Fach antippen → passende Übungen zum Stoff der letzten Stunde */
+(function () {
+  var DATA = {}; try { DATA = JSON.parse(document.getElementById('app-data').textContent); } catch (e) {}
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function today() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  var STOP = /^(davor|aufgabe|aufgaben|beispiel|wichtig|immer|dabei|werden|wurde|wird|haben|einem|einer|eines|diese|dieser|dieses|nicht|nur|auch|sowie|zwischen|unter|über|durch|gegen|ohne|heute|stunde|seite|station|übungen|übung|schulaufgabe|kurze|kurzer|lange|langer|beim|wenn|dann|dass|oder|sich|sind|kann|können|soll|sollen|muss|müssen)$/;
+  function toks(t) { var o = {}; String(t || '').toLowerCase().replace(/[₀-₉⁰-⁹]/g, '').split(/[^a-zäöüß0-9]+/).forEach(function (w) { if (w.length >= 5 && !STOP.test(w)) o[w.length > 7 ? w.slice(0, 7) : w] = 1; }); return o; }
+  function lastLesson(sub) { return (DATA.lessons || []).filter(function (l) { return l.subject === sub; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; })[0]; }
+  function matches(sub, l) {
+    var lt = toks((l.title || '') + ' ' + (l.points || []).join(' ')), t = today(), out = [];
+    (DATA.exams || []).filter(function (e) { return e.subject === sub; }).forEach(function (e) {
+      (e.units || []).forEach(function (u) {
+        var ut = toks((u.title || '') + ' ' + (u.learn || []).join(' ')), sc = 0, tt = toks(u.title);
+        Object.keys(lt).forEach(function (w) { if (ut[w]) sc += tt[w] ? 2 : 1; });
+        if (sc >= 2) out.push({ e: e, u: u, sc: sc + (e.date >= t ? 1 : 0) });
+      });
+    });
+    out.sort(function (a, b) { return b.sc - a.sc; });
+    return out.filter(function (m) { return m.sc >= out[0].sc * 0.6; }).slice(0, 3);
+  }
+  var css = document.createElement('style');
+  css.textContent = '#lastList details.lsn > summary b{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;text-decoration-color:var(--soft,#999)}' +
+    '#lx{position:fixed;inset:0;z-index:62;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}#lx[hidden]{display:none}' +
+    '#lx .ls{background:var(--bg,#fff);color:var(--ink,#111);width:100%;max-width:640px;max-height:90vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom))}' +
+    '@media (min-width:1000px){#lx{align-items:center}#lx .ls{border-radius:20px;padding:24px 28px}}' +
+    '#lx .lt{display:flex;align-items:center;gap:10px}#lx h2{margin:0;font-size:19px;flex:1}#lx .lxx{all:unset;cursor:pointer;font-size:28px;line-height:1;padding:2px 8px;color:var(--soft,#777)}' +
+    '#lx .sub{color:var(--soft,#777);font-size:14px;margin:4px 0 12px;line-height:1.4}' +
+    '#lx .opt{all:unset;box-sizing:border-box;display:block;width:100%;cursor:pointer;border:1px solid var(--line,#ddd);background:var(--card,#fff);border-radius:14px;padding:12px 14px;margin:0 0 8px}' +
+    '#lx .opt:hover{border-color:var(--red,#d9480f)}#lx .opt b{display:block;font-size:16px}#lx .opt span{display:block;font-size:13.5px;color:var(--soft,#777);margin-top:3px;line-height:1.35}';
+  document.head.appendChild(css);
+  var ov = document.createElement('div'); ov.id = 'lx'; ov.hidden = true; document.body.appendChild(ov);
+  var acts = [];
+  function close() { ov.hidden = true; ov.innerHTML = ''; document.body.style.overflow = ''; }
+  function fake(attrs) {
+    var box = document.createElement('div'); box.className = 'task'; box.style.display = 'none';
+    var b = document.createElement('button'); b.className = 'go'; b.type = 'button';
+    Object.keys(attrs).forEach(function (k) { b.setAttribute(k, attrs[k]); }); box.appendChild(b); document.body.appendChild(box);
+    b.click(); setTimeout(function () { box.remove(); }, 0);
+  }
+  function show(sub, row) {
+    var l = lastLesson(sub); acts = [];
+    var wd = row && row.querySelector('.wd-go');
+    if (wd) acts.push({ t: 'Kurztest zur letzten Stunde', d: 'Ein paar Fragen genau zum Stoff der letzten Stunde, danach das Wichtigste und Erklärungen', f: function () { wd.click(); } });
+    if (l) matches(sub, l).forEach(function (m) {
+      acts.push({ t: 'Üben: ' + m.u.title, d: 'Passende Lerneinheit aus ' + (m.e.type || 'der Prüfung') + ' am ' + m.e.date.split('-').reverse().join('.') + ' – Übungsform wählen (Lückentext, Wahr/Falsch, …)', f: function () { fake({ 'data-learn': m.e.id, 'data-unit': m.u.id, 'data-tk': '' }); } });
+    });
+    var pr = (DATA.practice || []).find(function (p) { return p.subject === sub; });
+    if (pr) acts.push({ t: 'Vokabeln ' + sub, d: 'Zum Fach unter „Üben“ – Vokabeln und mehr', f: function () { var a = document.createElement('a'); a.setAttribute('data-hub', pr.id); a.style.display = 'none'; document.body.appendChild(a); a.click(); a.remove(); } });
+    if (window.KI && l) acts.push({ t: 'Frag die KI zur letzten Stunde', d: 'Fragen stellen oder dir den Stoff erklären lassen', f: function () { KI.open(sub, 'Stoff der letzten Stunde (' + l.date + '): ' + (l.title || '') + '\n' + (l.points || []).map(function (p) { return '- ' + p; }).join('\n')); } });
+    if (!acts.length) return false;
+    ov.innerHTML = '<div class="ls" role="dialog" aria-modal="true" aria-label="Üben: ' + esc(sub) + '"><div class="lt"><h2>' + esc(sub) + ' üben</h2><button class="lxx" data-lx-close aria-label="Schließen">×</button></div>' +
+      '<p class="sub">' + (l ? 'Letzte Stunde: <b>' + esc(l.title || '') + '</b>' : 'Noch keine Stunde eingetragen.') + '</p>' +
+      acts.map(function (a, i) { return '<button class="opt" type="button" data-lx="' + i + '"><b>' + esc(a.t) + '</b><span>' + esc(a.d) + '</span></button>'; }).join('') + '</div>';
+    ov.hidden = false; document.body.style.overflow = 'hidden'; return true;
+  }
+  ov.addEventListener('click', function (e) {
+    if (e.target === ov || e.target.closest('[data-lx-close]')) return close();
+    var b = e.target.closest('[data-lx]'); if (!b) return; var a = acts[+b.dataset.lx]; close(); if (a) a.f();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !ov.hidden) close(); });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#lastList details.lsn > summary b'); if (!b) return;
+    var row = b.closest('summary'), sub = b.textContent.trim();
+    if (show(sub, row)) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+})();
