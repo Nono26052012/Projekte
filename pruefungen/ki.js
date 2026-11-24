@@ -13,7 +13,7 @@
     var mine = pr && { eth: 'Ethik', rk: 'Kath. Religionslehre', ev: 'Evang. Religionslehre' }[pr.rel];
     return Object.keys(s).filter(function (x) { return !mine || !/^(Ethik|Kath\. Religionslehre|Evang\. Religionslehre)$/.test(x) || x === mine; }).sort(function (a, b) { return a.localeCompare(b, 'de'); });
   }
-  function hasStuff(sub) { return (DATA.exams || []).some(function (e) { return e.subject === sub && ((e.units && e.units.length) || (e.quiz && e.quiz.length) || (e.topics && e.topics.length) || (e.cards && e.cards.length)); }) || (DATA.lessons || []).some(function (l) { return l.subject === sub; }) || (DATA.practice || []).some(function (p) { return p.subject === sub; }); }
+  function hasStuff(sub) { return (DATA.exams || []).some(function (e) { return e.subject === sub; }) || (DATA.lessons || []).some(function (l) { return l.subject === sub; }) || (DATA.practice || []).some(function (p) { return p.subject === sub; }); }
   function today() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 
   /* ---------- Den ganzen Stoff eines Fachs als Text ---------- */
