@@ -269,8 +269,8 @@ function startDraw(id, did, taskKey) {
 }
 
 /* ---------- Antworten tippen ---------- */
-const normEq = s => s.toLowerCase().replace(/⁺/g, '+').replace(/[⁻−–]/g, '-').replace(/[₂²]/g, '2').replace(/[₃³]/g, '3').replace(/\s*(→|=>|->)\s*/g, '>').replace(/\s+/g, '');
-const normTx = s => s.toLowerCase().replace(/[‐-–]/g, '-').replace(/\s+/g, ' ');
+const normEq = s => s.toLowerCase().replace(/[*×⋅∙]/g, '·').replace(/⁺/g, '+').replace(/[⁻−–]/g, '-').replace(/[₂²]/g, '2').replace(/[₃³]/g, '3').replace(/\s*(→|=>|->)\s*/g, '>').replace(/\s+/g, '');
+const normTx = s => s.toLowerCase().replace(/[*×⋅∙]/g, '·').replace(/[‐-–]/g, '-').replace(/\s+/g, ' ');
 function startWrite(id, wid, taskKey) {
   const ex = findEx(id), w = ex && (ex.writes || []).find(x => x.id === wid); if (!w) return;
   open('<div class="top"><h3>' + esc(w.title) + '</h3><button class="x" data-close aria-label="Schließen">×</button></div>' +
@@ -281,7 +281,7 @@ function startWrite(id, wid, taskKey) {
     if (ev.target === modal || ev.target.closest('[data-close]')) return close();
     if (!ev.target.closest('[data-check]')) return;
     const raw = modal.querySelector('#ans').value, normCode = s => s.toLowerCase().replace(/\s+/g, ''), txt = w.eq ? normEq(raw) : w.code ? normCode(raw) : normTx(raw);
-    const hit = w.keys.map(alts => alts.some(a => txt.includes(w.code ? normCode(a) : a)));
+    const hit = w.keys.map(alts => alts.some(a => txt.includes(w.code ? normCode(a) : a.toLowerCase().replace(/[*×⋅∙]/g, '·'))));
     const n = hit.filter(Boolean).length, ok = n / w.keys.length >= PASS;
     if (ok) markDone(taskKey);
     modal.querySelector('#wres').innerHTML = '<p><b>' + n + ' von ' + w.keys.length + ' wichtigen Punkten gefunden.</b> ' + (ok ? 'Stark! ' + (taskKey ? 'Die Aufgabe ist abgehakt.' : '') : 'Vergleiche mit der Musterlösung, ergänze deine Antwort und prüfe nochmal.') + '</p>' +

@@ -65,7 +65,7 @@
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   var SUBS = '₀₁₂₃₄₅₆₇₈₉', SUPS = '⁰¹²³⁴⁵⁶⁷⁸⁹';
   function norm(s) {
-    s = String(s || '').toLowerCase();
+    s = String(s || '').toLowerCase().replace(/[*×⋅∙]/g, '·');
     s = s.replace(/[₀-₉]/g, function (c) { return String(SUBS.indexOf(c)); }).replace(/[⁰¹²³⁴-⁹]/g, function (c) { return String(SUPS.indexOf(c)); });
     return s.replace(/[⁺₊]/g, '+').replace(/[⁻₋−–]/g, '-').replace(/[\^_]/g, '').replace(/\s*(→|=>|->)\s*/g, '>').replace(/[\s.,;:!?„“"'()]/g, '');
   }
@@ -280,8 +280,8 @@
       else if (it.k === 'gap') { var ok = [it.ans].concat(it.alt || []).some(function (x) { return norm(x) === norm(a); }); p = ok ? 1 : 0; fb = (p ? '<b>Richtig.</b>' : '<b>Richtig wäre: ' + esc(it.ans) + '</b>') + esc(it.why || ''); }
       else {
         var w = it.w, txt = String(a || '');
-        var nt = w.eq ? norm(txt) : w.code ? txt.toLowerCase().replace(/\s+/g, '') : txt.toLowerCase();
-        var hits = w.keys.filter(function (g) { return (Array.isArray(g) ? g : [g]).some(function (k) { k = String(k).toLowerCase(); return w.code ? nt.indexOf(k.replace(/\s+/g, '')) >= 0 : nt.indexOf(k) >= 0; }); }).length;
+        var nt = w.eq ? norm(txt) : w.code ? txt.toLowerCase().replace(/\s+/g, '') : txt.toLowerCase().replace(/[*×⋅∙]/g, '·');
+        var hits = w.keys.filter(function (g) { return (Array.isArray(g) ? g : [g]).some(function (k) { k = String(k).toLowerCase(); if (!w.code) k = k.replace(/[*×⋅∙]/g, '·'); return w.code ? nt.indexOf(k.replace(/\s+/g, '')) >= 0 : nt.indexOf(k) >= 0; }); }).length;
         p = Math.round(hits / w.keys.length * m * 2) / 2; fb = '<b>' + hits + ' von ' + w.keys.length + ' wichtigen Punkten erkannt.</b>Musterlösung: ' + esc(w.model || '');
       }
       tot += p; max += m; return { p: p, max: m, fb: fb };
