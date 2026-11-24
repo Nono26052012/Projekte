@@ -2,7 +2,9 @@
 (function () {
   var DATA = {}; try { DATA = JSON.parse(document.getElementById('app-data').textContent); } catch (e) {}
   var sample = null, ready = false;
-  (async function () { try { if (window.claude && typeof claude.use === 'function') sample = await claude.use('sample'); } catch (e) {} ready = true; paintBtns(); })();
+  function hasClaude() { return !!(window.claude && typeof claude.use === 'function'); }
+  async function getSample() { if (sample) return sample; try { if (hasClaude()) sample = await claude.use('sample'); } catch (e) {} return sample; }
+  ready = true; getSample().then(function () { paintBtns(); if (!ov.hidden) render(); });
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function subjects() {
     var s = {}; (DATA.exams || []).forEach(function (e) { if (e.subject) s[e.subject] = 1; }); (DATA.lessons || []).forEach(function (l) { if (l.subject) s[l.subject] = 1; });
@@ -80,7 +82,7 @@
     ov.innerHTML = '<div class="ks" role="dialog" aria-modal="true" aria-label="Frag die KI"><div class="kh"><h2>Frag die KI</h2><select aria-label="Fach">' + opts + '</select><button class="kx" data-ki-close aria-label="Schließen">×</button></div>' +
       (task ? '<div class="ctx">Mit der aktuellen Aufgabe</div>' : '') +
       '<div class="km">' + bubbles() + '</div>' +
-      '<form><textarea rows="1" placeholder="' + (sample ? 'Deine Frage …' : 'Geht nur in der Claude-App') + '"' + (sample ? '' : ' disabled') + '></textarea><button class="send" type="submit"' + (busy || !sample ? ' disabled' : '') + '>Senden</button></form></div>';
+      '<form><textarea rows="1" placeholder="' + (sample || hasClaude() ? 'Deine Frage …' : 'Geht nur in der Claude-App') + '"' + (sample || hasClaude() ? '' : ' disabled') + '></textarea><button class="send" type="submit"' + (busy || !(sample || hasClaude()) ? ' disabled' : '') + '>Senden</button></form></div>';
     var m = ov.querySelector('.km'); m.scrollTop = m.scrollHeight;
   }
   function open(sub, taskText) {
@@ -91,7 +93,9 @@
   function close() { ov.hidden = true; ov.innerHTML = ''; document.body.style.overflow = prevOverflow; }
 
   async function ask(q) {
-    if (!sample || busy || !q.trim()) return;
+    if (busy || !q.trim()) return;
+    if (!sample) await getSample();
+    if (!sample) { var c0 = chats[cur] = chats[cur] || []; c0.push({ r: 'u', t: q.trim() }, { r: 'a', err: 1, t: 'Die KI ist hier gerade nicht verfügbar. Öffne die App in der Claude-App und erlaube die KI, wenn danach gefragt wird.' }); render(); return; }
     var c = chats[cur] = chats[cur] || []; c.push({ r: 'u', t: q.trim() }); var a = { r: 'a', t: '…' }; c.push(a); busy = true; render();
     var g = grade(cur), hist = c.slice(0, -2).slice(-10).map(function (m) { return (m.r === 'u' ? 'Schüler: ' : 'Du: ') + m.t; }).join('\n');
     var prompt = 'Du bist eine geduldige, ehrliche Lernhilfe für eine Schülerin oder einen Schüler der Klasse 9 am bayerischen Gymnasium (Chiemgau-Gymnasium). Fach: ' + cur + '. Heute ist ' + today() + '.' +
@@ -145,7 +149,7 @@
   }
   function mk(sub) { var b = document.createElement('button'); b.type = 'button'; b.className = 'ki-btn'; b.textContent = 'Frag die KI'; if (sub) b.dataset.sub = sub; return b; }
   function paintBtns() {
-    if (!ready || !sample) return;
+    if (!ready || !(sample || hasClaude())) return;
     var gear = document.getElementById('gear');
     if (gear && !document.getElementById('kiOpen')) { var tb = mk(null); tb.id = 'kiOpen'; tb.className = 'ki-btn ki-top'; var nb = document.getElementById('ntOpen'); gear.parentNode.insertBefore(tb, nb && nb.parentNode === gear.parentNode ? nb : gear); }
     else if (gear) { var t0 = document.getElementById('kiOpen'), n0 = document.getElementById('ntOpen'); if (n0 && t0.nextSibling !== n0 && n0.parentNode === t0.parentNode) n0.parentNode.insertBefore(t0, n0); }
