@@ -345,6 +345,7 @@
   function show(sub, row) {
     var l = lastLesson(sub); acts = [];
     var wd = row && row.querySelector('.wd-go');
+    if (!wd && l && window.claude && typeof claude.use === 'function') wd = { click: function () { var b = document.createElement('button'); b.className = 'wd-go'; b.dataset.wdS = l.subject; b.dataset.wdD = l.date; b.style.display = 'none'; document.body.appendChild(b); b.click(); b.remove(); } };
     if (wd) acts.push({ t: 'Kurztest zur letzten Stunde', d: 'Ein paar Fragen genau zum Stoff der letzten Stunde, danach das Wichtigste und Erklärungen', f: function () { wd.click(); } });
     if (l) matches(sub, l).forEach(function (m) {
       acts.push({ t: 'Üben: ' + m.u.title, d: 'Passende Lerneinheit aus ' + (m.e.type || 'der Prüfung') + ' am ' + m.e.date.split('-').reverse().join('.') + ' – Übungsform wählen (Lückentext, Wahr/Falsch, …)', f: function () { fake({ 'data-learn': m.e.id, 'data-unit': m.u.id, 'data-tk': '' }); } });
@@ -363,6 +364,7 @@
     var b = e.target.closest('[data-lx]'); if (!b) return; var a = acts[+b.dataset.lx]; close(); if (a) a.f();
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !ov.hidden) close(); });
+  window.LX = { show: function (sub) { return show(sub, null); } };
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('#lastList details.lsn > summary b'); if (!b) return;
     var row = b.closest('summary'), sub = b.textContent.trim();
